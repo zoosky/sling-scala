@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Private-Package: org.apache.sling.scripting.scala
+Built-By: janandith
+Bundle-Category: sling
+Tool: Bnd-0.0.238
+Bundle-Name: Sling - Scripting - Scala Support
+ScriptEngine-Version: 2.0.0-incubator-SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+ScriptEngine-Name: Sling - Scripting - Scala Support
+Bundle-Vendor: The Apache Software Foundation
+Build-Jdk: 1.6.0_03
+Bundle-Version: 2.0.0.incubator-SNAPSHOT
+Bnd-LastModified: 1212425313368
+Bundle-ManifestVersion: 2
+Bundle-Description: Support for Scala scripting
+Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
+Import-Package: javax.script,org.apache.sling.scripting.api;version="2
+ .0.0.incubator-SNAPSHOT",scala.tools.nsc
+Bundle-SymbolicName: org.apache.sling.scripting.scala
+Bundle-DocURL: http://incubator.apache.org/sling
+
