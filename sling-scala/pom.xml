@@ -66,8 +66,17 @@
                 <configuration>
                     <instructions>
                         <Private-Package>
-                            org.apache.sling.scripting.scala
-                        </Private-Package>                  
+                            org.apache.sling.scripting.scala,
+                            scala.*,
+                            ch.epfl.lamp.fjbg.*,
+                            ch.epfl.lamp.compiler.*,
+                            org.apache.tools.ant.*,
+                            org.apache.tools.ant.types.*,
+                            org.apache.tools.tar.*,
+                            org.apache.tools.zip.*,
+                            org.apache.tools.bzip2.*,
+                            org.apache.env.*
+                        </Private-Package>
                         <ScriptEngine-Name>${pom.name}</ScriptEngine-Name>
                         <ScriptEngine-Version>${pom.version}</ScriptEngine-Version>
                     </instructions>
@@ -122,6 +131,16 @@
           <artifactId>servlet-api</artifactId>
           <version>2.4</version>
           <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.ant</groupId>
+          <artifactId>ant-nodeps</artifactId>
+          <version>1.7.0</version>
+        </dependency>
+        <dependency>
+          <groupId>xml-resolver</groupId>
+          <artifactId>xml-resolver</artifactId>
+          <version>1.2</version>
         </dependency>
         <dependency>
           <groupId>junit</groupId>

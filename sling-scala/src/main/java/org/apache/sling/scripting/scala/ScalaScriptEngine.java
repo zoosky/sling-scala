@@ -9,27 +9,22 @@
 package org.apache.sling.scripting.scala;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.io.PrintWriter;
 
-import javax.script.ScriptContext;
 import javax.script.Bindings;
-import javax.script.ScriptException;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngineFactory;
-
-
-import scala.tools.nsc.Interpreter;
-import scala.tools.nsc.Settings;
+import javax.script.ScriptException;
 
 import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.scripting.api.AbstractSlingScriptEngine;
+
+import scala.tools.nsc.Interpreter;
+import scala.tools.nsc.Settings;
 
 /**
  *
@@ -72,7 +67,6 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine{
         Bindings bindings = scriptContext.getBindings(ScriptContext.ENGINE_SCOPE);	
         String scriptName;        
         SlingScriptHelper helper = (SlingScriptHelper) bindings.get(SlingBindings.SLING);
-
 		Object result =null;
 		
         if (helper == null) {
@@ -128,14 +122,11 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine{
 //		 result = interpreter.interpret(scriptString.toString());
 //		 
 		 
+	    } catch (Exception e) {
+	        final ScriptException se = new ScriptException("Failure running script : " + e);
+	        se.initCause(e);
+	        throw se;
 	    }
-	    catch(Exception ex)
-	    {
-	    	ex.printStackTrace();
-	    }
-	    catch (Throwable t) {
-            throw new ScriptException("Failure running script : " + t);
-            }
 		
 		return null;
 	
