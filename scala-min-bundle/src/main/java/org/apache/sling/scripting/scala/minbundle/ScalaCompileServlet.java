@@ -16,7 +16,7 @@
  */
 package org.apache.sling.scripting.scala.minbundle;
 
-import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -46,6 +46,7 @@ import scala.tools.nsc.Settings;
  * @scr.property name="sling.servlet.selectors" value="compile"
  * @scr.property name="sling.servlet.extensions" value="scala"
  */
+@SuppressWarnings("serial")
 public class ScalaCompileServlet extends SlingSafeMethodsServlet {
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) 
@@ -55,17 +56,28 @@ public class ScalaCompileServlet extends SlingSafeMethodsServlet {
     	if(message == null) {
     		message = "This message was produced by a Scala script, use the message request parameter to replace it";
     	}
-	    final String code = "object MyClass { def execute = Console.println(\"" + message + "\") }";
-	    Interpreter interp = new Interpreter( new Settings(null) );
+    	
+    	// TODO here's the ugly part - haven't found a better way to define this yet
+    	final File libJar = new File("/tmp/scala-library-2.7.1.jar");
+    	if(!(libJar.exists())) {
+    		throw new IOException("Scala library must be available at " + libJar.getAbsolutePath());
+    	}
+
+    	// define and compile test code
+    	final String prefix = "If you see this it means that the Scala compiler works: ";
+	    final String code = "object MyClass { def execute = Console.println(\"" + prefix + message + "\") }";
+	    final Settings settings = new Settings(null);
+	    settings.classpath().value_$eq(libJar.getAbsolutePath());
+	    Interpreter interp = new Interpreter(settings);
 	    interp.compileString(code);
 	    
-	    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+	    // execute test code and send output to response
 	    final PrintStream oldOut = System.out;
 	    try {
 	    	response.setContentType("text/plain");
 	    	System.setOut(new PrintStream(response.getOutputStream()));
 		    interp.interpret("MyClass.execute");
-		    out.flush();
+		    response.getOutputStream().flush();
 	    } finally {
 	    	System.setOut(oldOut);
 	    }
