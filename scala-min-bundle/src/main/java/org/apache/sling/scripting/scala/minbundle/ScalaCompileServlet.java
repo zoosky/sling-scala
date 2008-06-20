@@ -57,29 +57,47 @@ public class ScalaCompileServlet extends SlingSafeMethodsServlet {
     		message = "This message was produced by a Scala script, use the message request parameter to replace it";
     	}
     	
-    	// TODO here's the ugly part - haven't found a better way to define this yet
-    	final File libJar = new File("/tmp/scala-library-2.7.1.jar");
-    	if(!(libJar.exists())) {
-    		throw new IOException("Scala library must be available at " + libJar.getAbsolutePath());
-    	}
+    	final ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    	try {
+    		Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+    		
+    		// Being able to instantiate this (which comes from scala-library) 
+    		// demonstrates that the scala Interpreter should find what it needs in the 
+    		// current ClassLoader
+    		new scala.Random();
+    		
+        	// SLING-549 - scala Interpreter needs this as it rebuilds its own classpath
+        	File libJar = null;
+        	libJar = new File("/tmp/scala-library-2.7.1.jar");
+        	if(!(libJar.exists())) {
+        		throw new IOException("Scala library must be available at " + libJar.getAbsolutePath());
+        	}
 
-    	// define and compile test code
-    	final String prefix = "If you see this it means that the Scala compiler works: ";
-	    final String code = "object MyClass { def execute = Console.println(\"" + prefix + message + "\") }";
-	    final Settings settings = new Settings(null);
-	    settings.classpath().value_$eq(libJar.getAbsolutePath());
-	    Interpreter interp = new Interpreter(settings);
-	    interp.compileString(code);
-	    
-	    // execute test code and send output to response
-	    final PrintStream oldOut = System.out;
-	    try {
-	    	response.setContentType("text/plain");
-	    	System.setOut(new PrintStream(response.getOutputStream()));
-		    interp.interpret("MyClass.execute");
-		    response.getOutputStream().flush();
-	    } finally {
-	    	System.setOut(oldOut);
-	    }
+        	// define and compile test code
+        	final String prefix = "If you see this it means that the Scala compiler works: ";
+    	    final String code = "object MyClass { def execute = Console.println(\"" + prefix + message + "\") }";
+    	    final Settings settings = new Settings(null);
+    	    settings.verbose().v_$eq(true);
+    	    if(libJar != null) {
+    	    	settings.classpath().value_$eq(libJar.getAbsolutePath());
+    	    }
+    	    Interpreter interp = new Interpreter(settings);
+    	    interp.compileString(code);
+    	    
+    	    // execute test code and send output to response
+    	    final PrintStream oldOut = System.out;
+    	    try {
+    	    	response.setContentType("text/plain");
+    	    	System.setOut(new PrintStream(response.getOutputStream()));
+    		    interp.interpret("MyClass.execute");
+    		    response.getOutputStream().flush();
+    	    } finally {
+    	    	System.setOut(oldOut);
+    	    }
+    	    
+    	} finally {
+    		Thread.currentThread().setContextClassLoader(oldClassLoader);
+    	}
+    	
     }
 }

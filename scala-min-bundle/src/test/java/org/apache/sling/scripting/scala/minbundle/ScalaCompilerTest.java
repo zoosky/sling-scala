@@ -17,7 +17,6 @@
 package org.apache.sling.scripting.scala.minbundle;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 
 import junit.framework.TestCase;
@@ -27,9 +26,12 @@ import scala.tools.nsc.Settings;
 /** Minimal test of the Scala compiler, embedded */
 public class ScalaCompilerTest extends TestCase {
 	
-	public void testScalaCompile() throws IOException {
+	public void testScalaCompile() throws Exception {
+		Class.forName("scala.ScalaObject");
 	    final String code = "object MyClass { def execute = Console.println(\"this is my script\") }";
-	    Interpreter interp = new Interpreter( new Settings(null) );
+	    final Settings settings =  new Settings(null);
+	    //settings.debug().value_$eq(true);
+	    Interpreter interp = new Interpreter(settings);
 	    interp.compileString(code);
 	    
 	    final ByteArrayOutputStream out = new ByteArrayOutputStream();
