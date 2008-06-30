@@ -1,67 +1,105 @@
 package org.apache.sling.scripting.scala;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.FileReader;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-
-import org.apache.sling.scripting.scala.ScalaScriptEngineFactory;
-import org.apache.sling.scripting.scala.ScalaScriptEngine;
-
+import junit.framework.TestCase;
 import scala.tools.nsc.Interpreter;
 import scala.tools.nsc.Settings;
 
-import junit.framework.TestCase;
-import javax.jcr.Node;
-import java.lang.Object;
-
 public class ScalaScriptEngineTest extends TestCase{
 
+	// TODO SLING-549 for now the Scala compiler needs a 
+	// String classpath
+	public static final String [] CLASSPATH_FILES = {
+		"scala-library/2.7.1/scala-library-2.7.1.jar",
+		
+		// TODO for now, test simple non-JCR bindings only
+		/*
+		"jcr-1.0.jar",
+		"jackrabbit-api-1.4.jar",
+		"jackrabbit-classloader-1.4.jar",
+		"jackrabbit-jcr-commons-1.4.2.jar",
+		"jackrabbit-core-1.4.3.jar",
+		"jackrabbit-jcr-rmi-1.4.1.jar",
+		"jackrabbit-jcr-server-1.4.jar",
+		"jackrabbit-ocm-1.4.jar",
+		"jackrabbit-spi-1.4.jar",
+		"jackrabbit-spi-commons-1.4.jar",
+		"jackrabbit-text-extractors-1.4.jar",
+		"jackrabbit-webdav-1.4.jar",
+		*/
+	};
 	
-    private String scalaLibrary = "/tmp/scala-library/2.7.1/scala-library-2.7.1.jar";
-    private String jcrNodeLibrary = "/tmp/jcr-1.0.jar";
-    private String jackrabbitAPI = "/tmp/jackrabbit-api-1.4.jar";
-    private String jackrabbitClassloader = "/tmp/jackrabbit-classloader-1.4.jar";
-    private String jackrabbitCommons = "/tmp/jackrabbit-jcr-commons-1.4.2.jar";
-    private String jackrabitCore = "/tmp/jackrabbit-core-1.4.3.jar";
-    private String jackrabbitRmi = "/tmp/jackrabbit-jcr-rmi-1.4.1.jar";
-    private String jackrabbitServer = "/tmp/jackrabbit-jcr-server-1.4.jar";
-    private String jackrabbitOcm = "/tmp/jackrabbit-ocm-1.4.jar";
-    private String jackrabbitSpi = "/tmp/jackrabbit-spi-1.4.jar";
-    private String jackrabbitSpiCommons = "/tmp/jackrabbit-spi-commons-1.4.jar";
-    private String jackrabbitText = "/tmp/jackrabbit-text-extractors-1.4.jar";
-    private String jackrabbitWebDav ="/tmp/jackrabbit-webdav-1.4.jar";
-    private String feedClassPath = "" + scalaLibrary + File.pathSeparator + jcrNodeLibrary + File.pathSeparator + jackrabbitAPI + File.pathSeparator + jackrabbitClassloader + File.pathSeparator + jackrabbitCommons + File.pathSeparator + jackrabbitOcm + File.pathSeparator + jackrabbitRmi + File.pathSeparator + jackrabbitServer + File.pathSeparator + jackrabbitSpi + File.pathSeparator + jackrabbitSpiCommons + File.pathSeparator + jackrabbitText + File.pathSeparator + jackrabbitWebDav + File.pathSeparator + jackrabitCore;
-
-
-		public void testScriptEngineScalaIteratorSimpleScript(){
-			
-			Settings scalaInterpreterSettings = new Settings();
-			StringWriter interpreterTextOutput = new StringWriter();		
-			PrintWriter interpreterOutputStream = new PrintWriter(interpreterTextOutput);
-			scalaInterpreterSettings.classpath().value_$eq(feedClassPath);
-			Interpreter scalaInterpreter = new Interpreter(scalaInterpreterSettings,interpreterOutputStream);
-			
-			String code = "4+2";
-			scalaInterpreter.interpret(code);
-			System.out.println("Interpreter Output:");
-			System.out.println(interpreterTextOutput.toString());			
-			assertEquals("res0: Int = 6", interpreterTextOutput.toString());
+	// Need to find the required jars there
+	public static final File CLASSPATH_BASE = new File("/tmp/scala-jars"); 
+	
+	protected static String getClasspath() {
+		final StringBuffer sb = new StringBuffer();
+		
+		for(String str : CLASSPATH_FILES) {
+			final File f = new File(CLASSPATH_BASE, str);
+			if(!f.exists()) {
+				fail("SLING-549 required jar file not found: " + f.getAbsolutePath());
+			}
+			if(sb.length() > 0) {
+				sb.append(File.pathSeparatorChar);
+			}
+			sb.append(f.getAbsolutePath());
+		}
+		return sb.toString();
+	}
+	
+	protected String eval(String code, Settings settings, Map<String, Object> bindings) {
+		if(settings == null) {
+			settings = new Settings();
 		}
 		
-		public void testScriptEngineScalaIteratorBindString(){
+		final StringWriter sw = new StringWriter();		
+		final PrintWriter pw = new PrintWriter(sw);
+		settings.classpath().value_$eq(getClasspath());
+		
+		Interpreter scalaInterpreter = new Interpreter(settings,pw);
+		if(bindings != null) {
+			for(Map.Entry<String, Object> e : bindings.entrySet()) {
+				scalaInterpreter.bind(e.getKey(), e.getValue().getClass().getName(),e.getValue());
+			}
+		}
+		
+		scalaInterpreter.interpret(code.trim());
+		pw.flush();
+		
+        //System.out.println("eval output:");
+        //System.out.println(sw.toString());
+		
+		return sw.toString().trim();
+	}
+
+		public void testSimpleExpression() {
+			assertEquals("res0: Int = 6", eval("4+2", null, null));
+		}
+		
+		public void testStringBinding() throws IOException {
+			final Map<String, Object> bindings = new HashMap<String, Object>();
+			bindings.put("testString", "Hello, scala");
+			final String code = readScript("TestScriptOne.scala");
+			final String expected = "testString: java.lang.String = Hello, scala"; 
+			assertEquals(expected, eval(code, null, bindings));
+		}
+		
+		/*
+		public void testScriptEngineScalaIteratorBindString() throws IOException {
 			
 			Settings scalaInterpreterSettings = new Settings();
 			StringWriter interpreterTextOutput = new StringWriter();		
 			PrintWriter interpreterOutputStream = new PrintWriter(interpreterTextOutput);
-			scalaInterpreterSettings.classpath().value_$eq(feedClassPath);
+			scalaInterpreterSettings.classpath().value_$eq(getClasspath());
 			
 			Interpreter scalaInterpreter = new Interpreter(scalaInterpreterSettings,interpreterOutputStream);
 			String s = "This is the bound String: value";
@@ -69,17 +107,15 @@ public class ScalaScriptEngineTest extends TestCase{
 			
 			String code = readScript("TestScriptOne.scala");
 			scalaInterpreter.interpret(code);
-			System.out.println("Interpreter Output:");
-			System.out.println(interpreterTextOutput.toString());			
-			
-		}		
+		}
+		*/		
 	
 //		public void testScriptEngineScalaIteratorBindingNode(){
 //			
 //			Settings scalaInterpreterSettings = new Settings();
 //			StringWriter interpreterTextOutput = new StringWriter();		
 //			PrintWriter interpreterOutputStream = new PrintWriter(interpreterTextOutput);
-//			scalaInterpreterSettings.classpath().value_$eq(feedClassPath);
+//			scalaInterpreterSettings.classpath().value_$eq(getClasspath());
 //			Interpreter scalaInterpreter = new Interpreter(scalaInterpreterSettings,interpreterOutputStream);
 //
 //		
@@ -96,7 +132,7 @@ public class ScalaScriptEngineTest extends TestCase{
 //			Settings scalaInterpreterSettings = new Settings();
 //			StringWriter interpreterTextOutput = new StringWriter();		
 //			PrintWriter interpreterOutputStream = new PrintWriter(interpreterTextOutput);
-//			scalaInterpreterSettings.classpath().value_$eq(feedClassPath);
+//			scalaInterpreterSettings.classpath().value_$eq(getClasspath());
 //			Interpreter scalaInterpreter = new Interpreter(scalaInterpreterSettings,interpreterOutputStream);		
 //			Node n;
 //			Bindings bind;
@@ -110,26 +146,25 @@ public class ScalaScriptEngineTest extends TestCase{
 //		}	
 		
 		
-	    public String readScript(String file){
+	    public String readScript(String path) throws IOException {
 	    	
-	    	File script = new File(file);
+	    	final String base = path.startsWith("/") ? "" : "/test-scripts/"; 
+	    	path = base + path;
 	    	
-	        StringBuffer scriptString = new StringBuffer();
-	        try{
-	        BufferedReader bufferedScript = new BufferedReader(new FileReader(script));
-	        String nextLine = bufferedScript.readLine();
-	        
-	        while (nextLine != null) {
-	            scriptString.append(nextLine);
-	            scriptString.append("\n");
-	            nextLine = bufferedScript.readLine();
-	        } 
-	        }catch(FileNotFoundException e){
-	        	System.err.println("ERROR: Cannot open File");
-	        }catch(IOException e){
-	        	System.err.println("ERROR: Cannot read File");
-	        }
-	        return scriptString.toString();
+	    	final InputStream is = getClass().getResourceAsStream(path);
+	    	if(is == null) {
+	    		throw new IOException("Class resource not found at path " + path);
+	    	}
+	    	
+	    	final byte [] buffer = new byte[16384];
+	    	int n;
+	    	final ByteArrayOutputStream bos = new ByteArrayOutputStream(); 
+	    	while( (n = is.read(buffer, 0, buffer.length)) > 0) {
+	    		bos.write(buffer, 0, n);
+	    	}
+	    	
+	    	final String encoding = "UTF-8";
+	    	return new String(buffer, encoding);
 	    }
 
 
