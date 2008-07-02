@@ -93,58 +93,15 @@ public class ScalaScriptEngineTest extends TestCase{
 			assertEquals(expected, eval(code, null, bindings));
 		}
 		
-		/*
-		public void testScriptEngineScalaIteratorBindString() throws IOException {
-			
-			Settings scalaInterpreterSettings = new Settings();
-			StringWriter interpreterTextOutput = new StringWriter();		
-			PrintWriter interpreterOutputStream = new PrintWriter(interpreterTextOutput);
-			scalaInterpreterSettings.classpath().value_$eq(getClasspath());
-			
-			Interpreter scalaInterpreter = new Interpreter(scalaInterpreterSettings,interpreterOutputStream);
-			String s = "This is the bound String: value";
-			scalaInterpreter.bind("testString", "java.lang.String" , s);
-			
-			String code = readScript("TestScriptOne.scala");
-			scalaInterpreter.interpret(code);
+		public void testMultipleStringBindings() {
+			for(int i=0; i < 4; i++) {
+				final Map<String, Object> bindings = new HashMap<String, Object>();
+				bindings.put("testString", "Hello, scala " + i);
+				final String code = "Console.println(testString);";
+				final String expected = "testString: java.lang.String = Hello, scala " + i; 
+				assertEquals("At step " + i, expected, eval(code, null, bindings));
+			}
 		}
-		*/		
-	
-//		public void testScriptEngineScalaIteratorBindingNode(){
-//			
-//			Settings scalaInterpreterSettings = new Settings();
-//			StringWriter interpreterTextOutput = new StringWriter();		
-//			PrintWriter interpreterOutputStream = new PrintWriter(interpreterTextOutput);
-//			scalaInterpreterSettings.classpath().value_$eq(getClasspath());
-//			Interpreter scalaInterpreter = new Interpreter(scalaInterpreterSettings,interpreterOutputStream);
-//
-//		
-//			scalaInterpreter.bind("n", "javax.jcr.Node" , new Node());
-//			String code = readScript("TestScriptTwo.scala");
-//			scalaInterpreter.interpret(code);
-//			System.out.println("Interpreter Output:");
-//			System.out.println(interpreterTextOutput.toString());			
-//			
-//		}		
-//
-//		public void testScriptEngineScalaIteratorBindBinding(){
-//			
-//			Settings scalaInterpreterSettings = new Settings();
-//			StringWriter interpreterTextOutput = new StringWriter();		
-//			PrintWriter interpreterOutputStream = new PrintWriter(interpreterTextOutput);
-//			scalaInterpreterSettings.classpath().value_$eq(getClasspath());
-//			Interpreter scalaInterpreter = new Interpreter(scalaInterpreterSettings,interpreterOutputStream);		
-//			Node n;
-//			Bindings bind;
-//			bind.put("currentNode", n);
-//			scalaInterpreter.bind("bind", "javax.script.Bindings" , bind);
-//			String code = readScript("TestScriptThree.scala");
-//			scalaInterpreter.interpret(code);
-//			System.out.println("Interpreter Output:");
-//			System.out.println(interpreterTextOutput.toString());			
-//			
-//		}	
-		
 		
 	    public String readScript(String path) throws IOException {
 	    	
