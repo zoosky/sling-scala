@@ -18,7 +18,7 @@ public class ScalaScriptEngineTest extends TestCase{
 	// TODO SLING-549 for now the Scala compiler needs a 
 	// String classpath
 	public static final String [] CLASSPATH_FILES = {
-		"scala-library/2.7.1/scala-library-2.7.1.jar",
+		"scala-library-2.7.1.jar",
 		
 		// TODO for now, test simple non-JCR bindings only
 		/*
