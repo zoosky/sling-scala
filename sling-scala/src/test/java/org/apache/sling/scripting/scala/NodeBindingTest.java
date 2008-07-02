@@ -19,10 +19,26 @@
  */
 package org.apache.sling.scripting.scala;
 
-import junit.framework.TestCase;
+import java.util.HashMap;
+import java.util.Map;
 
-public class NodeBindingTest extends TestCase {
-	public void testNothing() {
+import javax.jcr.Node;
+
+public class NodeBindingTest extends ScalaTestBase {
+	
+	public void testNodeBinding() throws Exception {
+		final Node n = getTestRootNode();
+		final Map<String, Object> bindings = new HashMap<String, Object>();
+		bindings.put("node", n);
+		final String code = "Console.println(node.getPath());";
+		
+		// TODO seems like eval returns a standard view of the bound object,
+		// i.e. not the node path in this case, but the node path is output
+		// on system.out (or err)
+		final String result = eval(code, null, bindings);
+		final String objectPrefix = "node: org.apache.jackrabbit.core.NodeImpl = ";
+		assertTrue("TODO: result (" + result + ") matches expected wrong value", 
+				result.contains(objectPrefix));
 	}
 }
 

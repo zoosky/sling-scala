@@ -19,20 +19,19 @@ public class ScalaTestBase extends RepositoryTestBase {
 	// String classpath
 	public static final String [] CLASSPATH_FILES = {
 		"scala-library-2.7.1.jar",
-		
-		// TODO for now, test simple non-JCR bindings only
-		/*
 		"jcr-1.0.jar",
 		"jackrabbit-api-1.4.jar",
 		"jackrabbit-classloader-1.4.jar",
-		"jackrabbit-jcr-commons-1.4.2.jar",
 		"jackrabbit-core-1.4.3.jar",
-		"jackrabbit-jcr-rmi-1.4.1.jar",
-		"jackrabbit-jcr-server-1.4.jar",
-		"jackrabbit-ocm-1.4.jar",
+		"jackrabbit-jcr-commons-1.4.2.jar",
 		"jackrabbit-spi-1.4.jar",
 		"jackrabbit-spi-commons-1.4.jar",
 		"jackrabbit-text-extractors-1.4.jar",
+		
+		/* According to mvn dependency:resolve, those are not needed 
+		"jackrabbit-jcr-rmi-1.4.1.jar",
+		"jackrabbit-jcr-server-1.4.jar",
+		"jackrabbit-ocm-1.4.jar",
 		"jackrabbit-webdav-1.4.jar",
 		*/
 	};
