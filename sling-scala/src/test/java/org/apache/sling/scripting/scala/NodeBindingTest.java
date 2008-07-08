@@ -25,21 +25,34 @@ import java.util.Map;
 import javax.jcr.Node;
 
 public class NodeBindingTest extends ScalaTestBase {
-	
+
 	public void testNodeBinding() throws Exception {
 		final Node n = getTestRootNode();
 		final Map<String, Object> bindings = new HashMap<String, Object>();
 		bindings.put("node", n);
 		final String code = "Console.println(node.getPath());";
-		
+
 		// TODO seems like eval returns a standard view of the bound object,
 		// i.e. not the node path in this case, but the node path is output
 		// on system.out (or err)
 		final String result = eval(code, null, bindings);
 		final String objectPrefix = "node: org.apache.jackrabbit.core.NodeImpl = ";
-		assertTrue("TODO: result (" + result + ") matches expected wrong value", 
+		assertTrue("TODO: result (" + result + ") matches expected wrong value",
 				result.contains(objectPrefix));
 	}
+
+        public void testBindings() throws Exception {
+            Node n = getTestRootNode();
+            String path = n.getPath();
+            Map<String, Object> bindings = new HashMap<String, Object>();
+            bindings.put("node", n);
+            final String code = "val node = bindings.get(\"node\").asInstanceOf[javax.jcr.Node]; val s = node.getPath(); bindings.put(\"result\", s);";
+
+            eval(code, bindings);
+            String result = (String) bindings.get("result");
+            System.out.println(result);
+            assertEquals(path, result);
+    }
 }
 
 //import java.io.File;
@@ -76,12 +89,12 @@ public class NodeBindingTest extends ScalaTestBase {
 //    private Calendar testCal;
 //    private ScriptEngineHelper.Data data;
 //    protected ScriptEngineHelper script;
-//    
-//	private StringWriter interpreterTextOutput  = new StringWriter();   
+//
+//	private StringWriter interpreterTextOutput  = new StringWriter();
 //	private Settings scalaInterpreterSettings = new Settings();
 //	private PrintWriter interpreterOutputStream = new PrintWriter(interpreterTextOutput);
 //	private Interpreter scalaInterpreter = null;
-//	
+//
 //    @Override
 //    protected void setUp() throws Exception {
 //        super.setUp();
@@ -90,13 +103,13 @@ public class NodeBindingTest extends ScalaTestBase {
 //        testText = "Test-" + System.currentTimeMillis();
 //        node.setProperty("text", testText);
 //        node.setProperty("otherProperty", node.getPath());
-//        
+//
 //        testNum = System.currentTimeMillis();
 //        node.setProperty("num", testNum);
-//        
+//
 //        testCal = Calendar.getInstance();
 //        node.setProperty("cal", testCal);
-//        
+//
 //        data = new ScriptEngineHelper.Data();
 //        data.put("node", node);
 //        textProperty = node.getProperty("text");
@@ -110,39 +123,39 @@ public class NodeBindingTest extends ScalaTestBase {
 //    public void testCodeExecuteSuccess() throws Exception {
 ////        final ScriptEngineHelper.Data data = new ScriptEngineHelper.Data();
 ////        data.put("node", getTestRootNode());
-//		Map<String, Object> bindings = new HashMap<String, Object>(); 
+//		Map<String, Object> bindings = new HashMap<String, Object>();
 //		bindings.put("currentNode" , node);
-//        scalaInterpreter.bind("bindings", "java.util.Map[String, Object]" , bindings); 
+//        scalaInterpreter.bind("bindings", "java.util.Map[String, Object]" , bindings);
 //        String code =
 //        	   "import javax.jcr.Node; " +
 //        	   "println(\"this is my script\"); " +
 //        	   "val node = bindings.get(\"currentNode\"); " +
 //        	   "val n: Node = node.asInstanceOf[Node]; " +
 //        	   "println(\"node \" + n.getName)";
-//      
+//
 //    	Object r = scalaInterpreter.interpret(scriptString.toString());
 //    	String expected = "Success";
 //    	String result = r.toString();
 //        assertEquals(expected , result);
 //        // reult gives Success if code was executed correctly
 //        // Actual result may not be the same every time because I havent got the correct result I expect
-//        // It gives a better picture if the evaluation procedure is visible therefore the interpreter's output is 
+//        // It gives a better picture if the evaluation procedure is visible therefore the interpreter's output is
 //        //printed to the console.
 //    	System.out.println(interpreterTextOutput.toString());
 //
-//        
+//
 //    }
 //
 //
-//    
+//
 //    protected void initInterpreter(String name , String type , String Value){
 //        String scalaLibrary = "/tmp/scala-library-2.7.1.jar";
 //        String jcrNodeLibrary = "/tmp/jcr-1.0.jar";
 //        String feedClassPath = scalaLibrary + File.pathSeparator + jcrNodeLibrary ;
-//				
+//
 //        scalaInterpreterSettings.verbose().value_$eq(true);
 //        scalaInterpreterSettings.classpath().value_$eq(feedClassPath);
-//        scalaInterpreter = new Interpreter(scalaInterpreterSettings , interpreterOutputStream); 
-//           
+//        scalaInterpreter = new Interpreter(scalaInterpreterSettings , interpreterOutputStream);
+//
 //    }
 //}

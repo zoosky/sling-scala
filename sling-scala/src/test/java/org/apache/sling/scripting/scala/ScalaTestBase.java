@@ -15,7 +15,7 @@ import scala.tools.nsc.Settings;
 
 /** Base class to scala tests */
 public class ScalaTestBase extends RepositoryTestBase {
-	// TODO SLING-549 for now the Scala compiler needs a 
+	// TODO SLING-549 for now the Scala compiler needs a
 	// String classpath
 	public static final String [] CLASSPATH_FILES = {
 		"scala-library-2.7.1.jar",
@@ -27,21 +27,21 @@ public class ScalaTestBase extends RepositoryTestBase {
 		"jackrabbit-spi-1.4.jar",
 		"jackrabbit-spi-commons-1.4.jar",
 		"jackrabbit-text-extractors-1.4.jar",
-		
-		/* According to mvn dependency:resolve, those are not needed 
+
+		/* According to mvn dependency:resolve, those are not needed
 		"jackrabbit-jcr-rmi-1.4.1.jar",
 		"jackrabbit-jcr-server-1.4.jar",
 		"jackrabbit-ocm-1.4.jar",
 		"jackrabbit-webdav-1.4.jar",
 		*/
 	};
-	
-	// Need to find the required jars there
-	public static final File CLASSPATH_BASE = new File("/tmp/scala-jars"); 
-	
+
+	// Need to find the required jars there (use mvn copy:dependencies)
+	public static final File CLASSPATH_BASE = new File("./target/dependency");
+
 	protected static String getClasspath() {
 		final StringBuffer sb = new StringBuffer();
-		
+
 		for(String str : CLASSPATH_FILES) {
 			final File f = new File(CLASSPATH_BASE, str);
 			if(!f.exists()) {
@@ -54,46 +54,56 @@ public class ScalaTestBase extends RepositoryTestBase {
 		}
 		return sb.toString();
 	}
-	
+
 	protected String eval(String code, Settings settings, Map<String, Object> bindings) {
 		if(settings == null) {
 			settings = new Settings();
 		}
-		
-		final StringWriter sw = new StringWriter();		
+
+		final StringWriter sw = new StringWriter();
 		final PrintWriter pw = new PrintWriter(sw);
 		settings.classpath().value_$eq(getClasspath());
-		
+
 		Interpreter scalaInterpreter = new Interpreter(settings,pw);
 		if(bindings != null) {
 			for(Map.Entry<String, Object> e : bindings.entrySet()) {
 				scalaInterpreter.bind(e.getKey(), e.getValue().getClass().getName(),e.getValue());
 			}
 		}
-		
+
 		scalaInterpreter.interpret(code.trim());
 		pw.flush();
-		
+
 		return sw.toString().trim();
 	}
 
+	protected void eval(String code, Map<String, Object> bindings) {
+	    Settings settings = new Settings();
+            settings.classpath().value_$eq(getClasspath());
+
+            Interpreter scalaInterpreter = new Interpreter(settings);
+            scalaInterpreter.bind("bindings", "java.util.Map[String, Object]", bindings);
+
+            scalaInterpreter.interpret(code.trim());
+	}
+
     public String readScript(String path) throws IOException {
-    	
-    	final String base = path.startsWith("/") ? "" : "/test-scripts/"; 
+
+    	final String base = path.startsWith("/") ? "" : "/test-scripts/";
     	path = base + path;
-    	
+
     	final InputStream is = getClass().getResourceAsStream(path);
     	if(is == null) {
     		throw new IOException("Class resource not found at path " + path);
     	}
-    	
+
     	final byte [] buffer = new byte[16384];
     	int n;
-    	final ByteArrayOutputStream bos = new ByteArrayOutputStream(); 
+    	final ByteArrayOutputStream bos = new ByteArrayOutputStream();
     	while( (n = is.read(buffer, 0, buffer.length)) > 0) {
     		bos.write(buffer, 0, n);
     	}
-    	
+
     	final String encoding = "UTF-8";
     	return new String(buffer, encoding);
     }
