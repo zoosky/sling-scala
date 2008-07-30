@@ -34,7 +34,7 @@
 
     <name>Sling - notes example</name>
     <description>
-        Sling Blog example. Demonstrates the capabilities of Sling by creating a Blog which renders posts based on content nodes.
+        Sling Notes example. Add a zip file with a teaser. You can search old notes using the search feature.
     </description>
 
     <build>

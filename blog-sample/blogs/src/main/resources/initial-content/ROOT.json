@@ -1,0 +1,10 @@
+{
+    "content" : {
+	    "jcr:primaryType" : "nt:unstructured",
+	    "blogs" : {
+		    "jcr:primaryType" : "nt:unstructured",
+		    "sling:resourceType" : "blogs"
+	    }
+    }
+	
+}
