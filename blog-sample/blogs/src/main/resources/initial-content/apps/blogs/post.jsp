@@ -22,10 +22,6 @@ if(ResourceUtil.isStarResource(resource)) {
 	String pathForNewNode = resource.getPath().substring(0, resource.getPath().length() - 1) + (new Date()).getTime();
 	node = BlogEngine.addNodeRecursively(pathForNewNode, "nt:unstructured", mySession);
 	
-	// add mixins
-	//node.addMixin("mix:referenceable");
-	//node.addMixin("mix:versionable");
-	
 	// take care of attachment
 	if(request.getParameter("title") != null) {
 		Node titleNode = node.addNode("title", "nt:data");

@@ -5,13 +5,13 @@
 </head>
 
 <body>
-<p><a href="html.jsp">view blog</a></p>
+<p><a href="/content/blogs.html">view blog</a></p>
 <blockquote> 
   <p>Title : </p>
   <form name="form1" method="post" action="/content/blogs/*" enctype="multipart/form-data" >
     <input name="title" type="text" size="100">
   <p>Post:</p>
-  <textarea name="body" cols="113" rows="50"></textarea>
+  <textarea name="body" cols="113" rows="25"></textarea>
   <p>&nbsp; </p>
     <input name="Submit" type="submit" value="Publish">
   </form>

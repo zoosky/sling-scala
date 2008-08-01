@@ -10,25 +10,24 @@
 <title>Untitled Document</title>
 </head>
 
-<body>
-<p>Sling Blog Sample</p>
-
-<p>Create new post <a href="<%=currentNode.getPath()%>.edit.html" /> </p>
-
+<body bgcolor="#000000">
+<h1><font color="#0000FF">Sling Blog Sample</font></h1>
+<font color="#0000FF"><a href="/content/blogs.edit.html" > Create new post </a> 
 <%
 // get all threads and include them
 NodeIterator childrenIterator = currentNode.getNodes();
 if(childrenIterator.hasNext()) {
 %>
 <p>Existing posts</p>
-
 <%
 while(childrenIterator.hasNext()) {
 	Node n = childrenIterator.nextNode();
-%><p><%=n.getProperty("title").getString()%> </p>
-  <p><%=n.getProperty("body").getString()%> </p><%
+%>
+<p><%=n.getProperty("title").getString()%> </p>
+<p><%=n.getProperty("body").getString()%> </p>
+<%
 }}
 %>
-
+</font>
 </body>
 </html> 

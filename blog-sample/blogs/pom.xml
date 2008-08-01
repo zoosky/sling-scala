@@ -28,13 +28,13 @@
     </parent>
 
     <groupId>org.apache.sling.samples</groupId>
-    <artifactId>org.apache.sling.samples.notes</artifactId>
+    <artifactId>org.apache.sling.samples.blogs</artifactId>
     <packaging>bundle</packaging>
     <version>2.0.3-incubator-SNAPSHOT</version>
 
-    <name>Sling - notes example</name>
+    <name>Sling - blogs example</name>
     <description>
-        Sling Notes example. Add a zip file with a teaser. You can search old notes using the search feature.
+        Sling Blogs example. 
     </description>
 
     <build>
