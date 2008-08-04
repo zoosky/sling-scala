@@ -1,0 +1,5 @@
+
+TemplateTestScript sub directory contains the script available in 15 minutes guide.
+This is used to create the html filter in FormatTemplate.
+
+EngineScripts contain scala scripts used to feed to the engine by attaching to a Node.
