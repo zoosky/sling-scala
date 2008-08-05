@@ -1,0 +1,223 @@
+html, body {
+	margin : 0;
+	padding : 0;
+	height : 100%;
+	width : 100%;
+	font-family: "Lucida Sans Unicode";
+	color : #ffffff;
+	background : #252525 url("/apps/blogs/img/bg.gif) repeat;
+}
+p {
+	font-size : 12px;
+}
+h1, h2, h3 {
+	font-size : 16px;
+	color : #ffffff;
+}
+.sideh1 {
+	font-size:14px;
+	font-weight:bold;
+	text-decoration:underline;
+	padding:15px;
+}
+.sidelinks {
+	font-size: 12px;
+	margin : 0 auto;
+}
+.sidelinks a:link {
+	color : #999999;
+	font-weight:bold;
+	text-decoration:none;
+}
+.sidelinks a:visited {
+	color : #999999;
+	font-weight:bold;
+	text-decoration:none;
+}
+.sidelinks a:hover {
+	color:#CCCCCC;
+	font-weight:bold;
+	text-decoration:none;
+}
+.sidelinks a:active {
+	color:#999999;
+	font-weight:bold;
+	text-decoration:none;
+}
+.readmore {
+	font-size: 12px;
+	color:#ffffff;
+	margin : 0 auto;
+	text-align: right;
+	font-weight:bold;
+}
+.readmore a:link {
+	color : #ffffff;
+	font-weight:bold;
+	text-decoration:underline;
+}
+.readmore a:visited {
+	color : #ffffff;
+	font-weight:bold;
+	text-decoration:underline;
+}
+.readmore a:hover {
+	color : #ffffff;
+	font-weight:bold;
+	text-decoration:underline;
+}
+.readmore a:active {
+	color : #ffffff;
+	font-weight:bold;
+	text-decoration:underline;
+}
+.container {
+	width : 800px;
+	margin : 0 auto 0 auto;
+	background:#252525;
+}
+.header {
+	height : 100px;
+	background : #252525 url(/apps/blogs/img/header.gif);
+	margin : 0;
+	padding : 0;
+	line-height:100px;
+}
+.sitename {
+	font-size : 40px;
+	text-align: center;
+	color : #000000;
+	vertical-align:middle;
+}
+.main-nav {
+	width : 400px;
+	height : 45px;
+	background : #111111 url(/apps/blogs/img/button.gif) no-repeat;
+	position:relative;
+	left:200px;
+}
+.main-nav ul {
+	border : 0;
+	margin : 0;
+	padding : 0;
+	list-style-type : none;
+	text-align : center;
+	font-size : 12px;
+	line-height : 45px;
+	clear : left;
+}
+.main-nav ul li {
+	display : block;
+	float : left;
+	text-align : center;
+	font-size : 12px;
+	line-height : 45px;
+	padding : 0;
+	margin : 0;
+}
+.main-nav ul li a span {
+	display : inline;
+	vertical-align : middle;
+}
+.main-nav ul li a {
+	width : 100px;
+	height : 45px;
+	margin : 0;
+	padding : 0;
+	display : block;
+}
+.main-nav ul li a.link1:hover {
+	background : url(/apps/blogs/img/buttonover.gif) 0 -45px;
+}
+.main-nav ul li a.link2:hover {
+	background : url(/apps/blogs/img/buttonover.gif) -100px -45px;
+}
+.main-nav ul li a.link3:hover {
+	background : url(/apps/blogs/img/buttonover.gif) -200px -45px;
+}
+.main-nav ul li a.link4:hover {
+	background : url(/apps/blogs/img/buttonover.gif) -300px -45px;
+}
+.main-nav a:link {
+	color : #ffffff;
+	text-decoration : none;
+	font-weight:bold;
+}
+.main-nav a:visited {
+	color : #ffffff;
+	text-decoration : none;
+	font-weight:bold;
+}
+.main-nav a:hover {
+	color : #ffffff;
+	text-decoration : none;
+	font-weight:bold;
+}
+.main-nav a:active {
+	color : #ffffff;
+	text-decoration : none;
+	font-weight:bold;
+}
+.navbar {
+	height : 45px;
+	background : url(/apps/blogs/img/navbar.gif);
+	margin-top : -45px;
+}
+.content {
+	color : #ffffff;
+	width :600px;
+	margin : 20px 0 0 20px;
+	background:#252525;
+}
+.contentside {
+	color : #ffffff;
+	width :140px;
+	margin : 20px 20px 0 0;
+	background:#252525;
+	float: right;
+}
+.contentdate {
+	color : #ffffff;
+	margin-bottom : 6px;
+	font-size : 10px;
+	font-weight:normal;
+}
+.contentitem {
+	padding : 6px 12px;
+	border : 1px solid #464646;
+	background:#252525 url(/apps/blogs/img/contentbg.gif);
+	margin-bottom : 8px;
+}
+.contentitemside {
+	background:#252525;
+}
+.footer {
+	border : 1px solid #464646;
+	background : #252525 url(/apps/blogs/img/contentbg.gif);
+	margin : 0 auto;
+	text-align : center;
+	padding-top : 5px;
+	padding-bottom : 5px;
+	width : 760px;
+	font-size : 10px;
+}
+.footer a:link {
+	color : #ffffff;
+	font-weight:bold;
+	text-decoration:underline;
+}
+.footer a:visited {
+	color : #ffffff;
+	font-weight:bold;
+	text-decoration:underline;
+}
+.footer a:hover {
+	color : #ffffff;
+	font-weight:bold;
+	text-decoration:underline;
+}
+.footer a:active {
+	color : #ffffff;
+	font-weight:bold;
+	text-decoration:underline;
+}
