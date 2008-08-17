@@ -279,15 +279,15 @@ public class JSPSlingIncludeTest extends HttpTestBase {
 
 	//This is a custom test for documentation purposes
 
-	public void testCustomScriptInput() throws Exception{
+//	public void testCustomScriptInput() throws Exception{
 		
-		uploadSlingIncludeScript("<sling:include replaceSelectors='suffixtest' replaceSuffix='/a.b' />" , "src/test/resources/integration-test/include/include.jsp");
-		String content = getContent(contentUrlDocument);
+//		uploadSlingIncludeScript("<sling:include replaceSelectors='suffixtest' replaceSuffix='/a.b' />" , "src/test/resources/integration-test/include/include.jsp");
+//		String content = getContent(contentUrlDocument);
 
-		assertTrue("Replaced suffix from suffixTest",content.contains("a.b"));
-		System.out.println(content);
+//		assertTrue("Replaced suffix from suffixTest",content.contains("a.b"));
+//		System.out.println(content);
 
-	}
+//	}
 
 
 	public String getContent(String nodeURL) throws Exception{
@@ -331,9 +331,8 @@ public class JSPSlingIncludeTest extends HttpTestBase {
 
         		out.write(initialScript);
         		out.close();
-      			uploadTestScript(resourceTypeDocument,"include/document.jsp" , "html.jsp");
-
-      			uploadTestScript(resourceTypeDocument,"include/suffixTest.jsp", "suffixtest.jsp");
+			uploadTestScript(resourceTypeXG,"include/document.jsp" , "html.jsp");
+      			//uploadTestScript(resourceTypeDocument,"include/suffixTest.jsp", "suffixtest.jsp");
 
 
 		} catch (IOException e) {}
