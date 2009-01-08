@@ -40,7 +40,7 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
     val compounds = packetize(name)
 
     def packageDeclaration =
-      if (compounds.size > 1) compounds.dropRight(1).mkString("package ", ".", "") + NL
+      if (compounds.size > 1) compounds.init.mkString("package ", ".", "") + NL
       else ""
 
     def className = compounds.last
@@ -83,12 +83,10 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
     compile(name, preProcess(name, code, bindings))
 
   def compile(source: AbstractFile): Reporter = {
-    // todo fix: check for mods since last compilation
     compile(List(new BatchSourceFile(source)))
   }
 
   def compile(name: String, source: AbstractFile, bindings: Bindings): Reporter = {
-    // todo fix: check for mods since last compilation
     val code = new String(source.toByteArray)
     compile(name, preProcess(name, code, bindings))
   }
@@ -131,6 +129,18 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
   def interprete(name: String, source: AbstractFile, bindings: Bindings,
                  in: InputStream, out: OutputStream): Reporter =
     interprete(name, source, bindings, option(in), option(out))
+
+  def getClassFile(name: String): AbstractFile = {
+    var file: AbstractFile = compiler.genJVM.outputDir
+    val pathParts = name.split("[./]").toList
+    for (dirPart <- pathParts.init) {
+      file = file.lookupName(dirPart, true)
+      if (file == null) {
+        return null
+      }
+    }
+    file.lookupName(pathParts.last + ".class", false)
+  }
 
   @throws(classOf[InterpreterException])
   def execute(name: String, bindings: Bindings, in: Option[InputStream], out: Option[OutputStream]): Reporter = {

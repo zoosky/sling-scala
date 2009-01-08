@@ -47,7 +47,7 @@ object BundleFS {
           def hasNext = dirs.hasMoreElements
           def next = {
             val entry = dirs.nextElement.asInstanceOf[String]
-            val entryUrl = new URL(url.getProtocol, url.getHost, url.getPort(), "/" + entry)
+            val entryUrl = bundle.getResource("/" + entry)
             if (entry.endsWith("/"))
               new DirEntry(entryUrl, DirEntry.this)
             else

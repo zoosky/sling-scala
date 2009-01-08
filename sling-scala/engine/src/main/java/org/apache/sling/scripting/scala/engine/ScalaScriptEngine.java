@@ -2,19 +2,20 @@ package org.apache.sling.scripting.scala.engine;
 
 import static org.apache.sling.scripting.scala.engine.ExceptionHelper.initCause;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.jcr.Node;
-import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
@@ -23,18 +24,22 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.scripting.SlingBindings;
+import org.apache.sling.api.scripting.SlingScript;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.scripting.api.AbstractSlingScriptEngine;
-import org.apache.sling.scripting.scala.interpreter.InterpreterException;
+import org.apache.sling.scripting.scala.interpreter.JcrFS;
 import org.apache.sling.scripting.scala.interpreter.ScalaBindings;
 import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
+import org.apache.sling.scripting.scala.interpreter.JcrFS.JcrNode;
 import org.slf4j.Logger;
 
+import scala.tools.nsc.io.AbstractFile;
 import scala.tools.nsc.reporters.Reporter;
 
 public class ScalaScriptEngine extends AbstractSlingScriptEngine {
     public static final String NL = System.getProperty("line.separator");
 
+    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
     private final ScalaInterpreter interpreter;
 
     public ScalaScriptEngine(ScalaInterpreter interpreter, ScriptEngineFactory scriptEngineFactory) {
@@ -42,71 +47,138 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         this.interpreter = interpreter;
     }
 
-    @Override
-    public Object eval(String script, ScriptContext context) throws ScriptException {
+    public Object eval(Reader scriptReader, final ScriptContext context) throws ScriptException {
         try {
             SlingBindings bindings = getBindings(context);
+            SlingScriptHelper scriptHelper = bindings.getSling();
+            if (scriptHelper == null) {
+                throw new IllegalArgumentException("Bindings does not contain script helper object");
+            }
+
             TypeHints typeHints = new TypeHints(bindings);
-            ScalaBindings scalaBindings = new ScalaBindings();
+            final ScalaBindings scalaBindings = new ScalaBindings();
             for (Object name : bindings.keySet()) {
                 scalaBindings.put((String) name, bindings.get(name), typeHints.get(name));
             }
 
-            // todo implement: pass JcrFolder for outDir
-            // todo implement: pass jcrFile for source
-            String scriptName = getScriptName(bindings);
-            synchronized (interpreter) {
-                check(interpreter.compile(scriptName, script, scalaBindings));
+            final JcrNode script = getScriptSource(scriptHelper);
+            final long scriptMod = script.lastModified();
+            final String scriptName = getScriptName(scriptHelper);
+
+            Boolean outDated = readLocked(new Callable<Boolean>() {
+                public Boolean call() throws Exception {
+                    return isOutDated(scriptMod, scriptName);
+                }
+            });
+
+            if (outDated) {
+                Reporter result = writeLocked(new Callable<Reporter>() {
+                    public Reporter call() throws Exception {
+                        return isOutDated(scriptMod, scriptName)
+                            ? interpreter.compile(scriptName, script, scalaBindings)
+                            : null;
+                    }
+                });
+
+                if (result != null && result.hasErrors()) {
+                    throw new ScriptException(result.toString());
+                }
             }
-            check(interpreter.execute(scriptName, scalaBindings, getInputStream(context), getOutputStream(context)));
+
+            Reporter result = readLocked(new Callable<Reporter>() {
+                public Reporter call() throws Exception {
+                    OutputStream outputStream = getOutputStream(context);
+                    Reporter result = interpreter.execute(scriptName, scalaBindings, getInputStream(context),
+                            outputStream);
+                    outputStream.flush();
+                    return result;
+                }
+            });
+            if (result.hasErrors()) {
+                throw new ScriptException(result.toString());
+            }
         }
-        catch (InterpreterException e) {
-            throw initCause(new ScriptException("Error executing script"), e);
+        catch (Exception e) {
+            if (e instanceof ScriptException) {
+                throw (ScriptException)e;
+            }
+            else {
+                throw initCause(new ScriptException("Error executing script"), e);
+            }
         }
         return null;
     }
 
-    public Object eval(Reader scriptReader, ScriptContext context) throws ScriptException {
-        BufferedReader br = new BufferedReader(scriptReader);
-        StringBuffer script = new StringBuffer();
-        String line;
-        try {
-            while ((line = br.readLine()) != null) {
-                script.append(line).append(NL);
-            }
-        }
-        catch (IOException e) {
-            throw initCause(new ScriptException("Error executing script"), e);
-        }
-        return eval(script.toString(), context);
-    }
-
     // -----------------------------------------------------< private >---
 
-    private static SlingBindings getBindings(ScriptContext context) {
-        Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
-        if (!(bindings instanceof SlingBindings)) {
-            throw new IllegalArgumentException("Bindings is not an instance of sling bindings");
+    private boolean isOutDated(long scriptMod, String scriptName) {
+        if (scriptMod == 0) {
+            return true;
         }
-        return (SlingBindings) bindings;
+
+        AbstractFile clazz = interpreter.getClassFile(scriptName);
+        if (clazz == null) {
+            return true;
+        }
+
+        long clazzMod = clazz.lastModified();
+        if (clazzMod == 0) {
+            return true;
+        }
+
+        return scriptMod > clazzMod;
     }
 
-    private static String getScriptName(SlingBindings bindings) {
-        SlingScriptHelper helper = bindings.getSling();
-        if (helper == null) {
-            throw new IllegalArgumentException("Bindings does not contain script helper object");
+    private <T> T readLocked(Callable<T> thunk) throws Exception {
+        rwLock.readLock().lock();
+        try {
+            return thunk.call();
         }
-        else {
-            String path = helper.getScript().getScriptResource().getPath();
-            if ( path.endsWith(".java") ) {
-                path = path.substring(0, path.length() - 5);
-            }
+        finally {
+            rwLock.readLock().unlock();
+        }
+    }
 
-            int pos = path.lastIndexOf("/");
-            return pos == -1
-                ? makeJavaIdentifier(path)
-                : path.substring(0, pos + 1) + makeJavaIdentifier(path.substring(pos + 1));
+    private <T> T writeLocked(Callable<T> thunk) throws Exception {
+        rwLock.writeLock().lock();
+        try {
+            return thunk.call();
         }
+        finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static SlingBindings getBindings(ScriptContext context) {
+        SlingBindings bindings = new SlingBindings();
+        bindings.putAll(context.getBindings(ScriptContext.ENGINE_SCOPE));
+        return bindings;
+    }
+
+    private static JcrNode getScriptSource(SlingScriptHelper scriptHelper) {
+        SlingScript script = scriptHelper.getScript();
+        Node scriptNode = script.getScriptResource().adaptTo(Node.class);
+        return JcrFS.create(scriptNode);
+    }
+
+    private static String getScriptName(SlingScriptHelper scriptHelper) {
+        String path = scriptHelper.getScript().getScriptResource().getPath();
+        if (path.endsWith(".scala")) {
+            path = path.substring(0, path.length() - 6);
+        }
+        if (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+
+        String[] parts = path.split("/");
+        StringBuilder scriptName = new StringBuilder();
+        scriptName.append(makeJavaIdentifier(parts[0]));
+        for (int k = 1; k < parts.length; k++) {
+            scriptName.append('.').append(makeJavaIdentifier(parts[k]));
+        }
+
+        return scriptName.toString();
     }
 
     /**
@@ -150,6 +222,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         return new String(result);
     }
 
+    @SuppressWarnings("serial")
     private static final Set<String> KEYWORDS = new HashSet<String>() {{
         add("abstract"); add("assert"); add("boolean"); add("break"); add("byte"); add("case"); add("catch");
         add("char"); add("class"); add("const"); add("continue"); add("default"); add("do"); add("double");
@@ -161,7 +234,6 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         add("try"); add("void"); add("volatile"); add("while");
     }};
 
-
     /**
      * Test whether the argument is a Java keyword
      */
@@ -169,36 +241,36 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         return KEYWORDS.contains(key);
     }
 
-    private static void check(Reporter result) throws ScriptException {
-        if (result.hasErrors()) {
-            throw new ScriptException(result.toString());
-        }
-    }
-
     private static InputStream getInputStream(final ScriptContext context) {
         return new InputStream() {
+            private final Reader reader = context.getReader();
+
             @Override
             public int read() throws IOException {
-                return new BufferedReader(context.getReader()).read();
+                return reader.read();
             }
         };
     }
 
     private static OutputStream getOutputStream(final ScriptContext context) {
         return new OutputStream() {
+            private final Writer writer = context.getWriter();
+
             @Override
             public void write(int b) throws IOException {
-                new BufferedWriter(context.getWriter()).write(b);
+                writer.write(b);
             }
         };
     }
 
-    // todo fix: use when ScalaInterpreter supports it
+    @SuppressWarnings("unused")  // todo fix: redirect stdErr when Scala supports it
     private static OutputStream getErrorStream(final ScriptContext context) {
         return new OutputStream() {
+            private final Writer writer = context.getErrorWriter();
+
             @Override
             public void write(int b) throws IOException {
-                new BufferedWriter(context.getErrorWriter()).write(b);
+                writer.write(b);
             }
         };
     }
@@ -248,6 +320,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         /**
          * Compile time assertion enforcing type safety
          */
+        @SuppressWarnings("unused")
         private static class CompileTimeAssertion {
             static {
                 SlingBindings b = new SlingBindings();
