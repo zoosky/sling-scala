@@ -20,9 +20,9 @@ class InterpreterTest extends TestCase {
     val out = new java.io.ByteArrayOutputStream
     interpreter.stdOut = out
 
-    val bindings = Map[String, (AnyRef, Class[_])](
-      ("msg", ("Hello world", classOf[String])),
-      ("time", (java.util.Calendar.getInstance.getTime, classOf[java.util.Date])))
+    val bindings = new ScalaBindings
+    bindings.put("msg", "Hello world", classOf[String])
+    bindings.put("time", java.util.Calendar.getInstance.getTime, classOf[java.util.Date])
 
     val code = "println(msg + \": \" + time)"
     interpreter.interprete("testi", code, bindings)

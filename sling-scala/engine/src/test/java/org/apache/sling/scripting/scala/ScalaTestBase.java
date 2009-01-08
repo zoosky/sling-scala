@@ -10,12 +10,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.apache.sling.commons.testing.jcr.RepositoryTestBase;
+import org.apache.sling.scripting.scala.interpreter.Bindings;
+import org.apache.sling.scripting.scala.interpreter.ScalaBindings;
 import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
 
 import scala.Console;
-import scala.Tuple2;
-import scala.collection.immutable.EmptyMap;
-import scala.collection.immutable.Map;
 import scala.tools.nsc.Settings;
 import scala.tools.nsc.reporters.ConsoleReporter;
 
@@ -37,7 +36,7 @@ public class ScalaTestBase extends RepositoryTestBase {
         settings.classpath().v_$eq(testCp != null ? testCp : javaCp);
 
         interpreter = new ScalaInterpreter(settings, null,
-                new ConsoleReporter(settings, null, new PrintWriter(Console.out())));
+                new ConsoleReporter(settings, null, new PrintWriter(Console.err())));
 
         interpreterOut = new ByteArrayOutputStream();
         interpreter.stdOut_$eq(interpreterOut);
@@ -58,15 +57,15 @@ public class ScalaTestBase extends RepositoryTestBase {
     }
 
     protected String evalScala(String code) {
-        Map<String, Tuple2<Object, Class<?>>> bindings = new EmptyMap<String, Tuple2<Object, Class<?>>>();
+        Bindings bindings = new ScalaBindings();
         return evalScala(createScriptName(), code, bindings);
     }
 
-    protected String evalScala(String code, Map<String, Tuple2<Object, Class<?>>> bindings) {
+    protected String evalScala(String code, Bindings bindings) {
         return evalScala(createScriptName(), code, bindings);
     }
 
-    protected String evalScala(String name, String code, Map<String, Tuple2<Object, Class<?>>> bindings) {
+    protected String evalScala(String name, String code, Bindings bindings) {
         interpreterOut.reset();
         interpreter.interprete(name, code, bindings); // todo fix evaluate return value
         return interpreterOut.toString();
@@ -77,7 +76,7 @@ public class ScalaTestBase extends RepositoryTestBase {
         return evalScala(code);
     }
 
-    protected String evalScalaScript(String scriptName, Map<String, Tuple2<Object, Class<?>>> bindings)
+    protected String evalScalaScript(String scriptName, Bindings bindings)
             throws URISyntaxException, IOException {
 
         String code = getScript(scriptName);

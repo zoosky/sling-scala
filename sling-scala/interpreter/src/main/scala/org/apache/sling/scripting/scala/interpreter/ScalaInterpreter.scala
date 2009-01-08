@@ -8,7 +8,6 @@ import java.io.{File, InputStream, OutputStream}
 package org.apache.sling.scripting.scala.interpreter {
 
 class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporter: Reporter) {
-  type Bindings = Map[String, (AnyRef, Class[_])]
 
   private var in: Option[InputStream] = None
   def stdIn = in
@@ -30,15 +29,16 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
   protected val parentClassLoader: ClassLoader = getClass.getClassLoader
 
   protected def preProcess(name: String, code: String, bindings: Bindings): String = {
-    def bind(e: (String, (AnyRef, Class[_]))) =
-      "val " + e._1 + " = bindings(\"" + e._1 + "\")._1.asInstanceOf[" + e._2._2.getName + "]"
+    def bind(a: (String, Argument[_])) =
+      "val " + a._1 + " = bindings.getValue(\"" + a._1 + "\").asInstanceOf[" + a._2.getType.getName + "]"
 
     // todo fix: this is not thread safe (THREAD-ISOLATED)
     // todo fix: don't hard code new line char
     // todo fix: reset stdIn and stdOut to their initial values
     "object " + name + " {\n" +
-    "  type Bindings = Map[String, (AnyRef, Class[_])]\n" +
-    "  def main(bindings: Bindings, stdIn: Option[java.io.InputStream], stdOut: Option[java.io.OutputStream]) {\n" +
+    "  def main(bindings: org.apache.sling.scripting.scala.interpreter.Bindings,\n" +
+    "           stdIn: Option[java.io.InputStream],\n" +
+    "           stdOut: Option[java.io.OutputStream]) {\n" +
          bindings.map(bind).mkString("", "\n", "\n") +
     "    stdIn match {\n" +
     "      case Some(in: java.io.InputStream) => Console.setIn(in)\n" +

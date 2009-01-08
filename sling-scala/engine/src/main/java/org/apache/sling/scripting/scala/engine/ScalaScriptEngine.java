@@ -24,12 +24,9 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.scripting.api.AbstractSlingScriptEngine;
+import org.apache.sling.scripting.scala.interpreter.ScalaBindings;
 import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
 import org.slf4j.Logger;
-
-import scala.Tuple2;
-import scala.collection.immutable.EmptyMap;
-import scala.collection.immutable.Map;
 
 public class ScalaScriptEngine extends AbstractSlingScriptEngine {
     public static final String NL = System.getProperty("line.separator");
@@ -46,10 +43,9 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         try {
             SlingBindings bindings = getBindings(context);
             TypeHints typeHints = new TypeHints(bindings);
-            Map<String, Tuple2<Object, Class<?>>> scalaBindings = new EmptyMap<String, Tuple2<Object, Class<?>>>();
+            ScalaBindings scalaBindings = new ScalaBindings();
             for (Object name : bindings.keySet()) {
-                scalaBindings = scalaBindings.update((String) name,
-                        new Tuple2<Object, Class<?>>(bindings.get(name), typeHints.get(name)));
+                scalaBindings.put((String) name, bindings.get(name), typeHints.get(name));
             }
 
             final Writer stdOutWriter = new BufferedWriter(context.getWriter());
@@ -60,7 +56,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
                 }
             });
 
-            // todo fix: ScalaInterpreter does not yet support redirecting stdErr
+            // todo fix: ScalaInterpreter does not (yet) support redirecting stdErr
             // final Writer errOutWriter = new BufferedWriter(context.getErrorWriter());
             // interpreter.stdErr_$eq(new OutputStream() {
             //     @Override
