@@ -32,6 +32,8 @@ import scala.collection.immutable.EmptyMap;
 import scala.collection.immutable.Map;
 
 public class ScalaScriptEngine extends AbstractSlingScriptEngine {
+    public static final String NL = System.getProperty("line.separator");
+
     private final ScalaInterpreter interpreter;
 
     public ScalaScriptEngine(ScalaInterpreter interpreter, ScriptEngineFactory scriptEngineFactory) {
@@ -93,7 +95,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         String line;
         try {
             while ((line = br.readLine()) != null) {
-                script.append(line).append("\n"); // todo fix: don't hard code new line char
+                script.append(line).append(NL);
             }
         }
         catch (IOException e) {
