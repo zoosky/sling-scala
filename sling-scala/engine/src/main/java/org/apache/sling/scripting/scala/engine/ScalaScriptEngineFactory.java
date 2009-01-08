@@ -35,7 +35,7 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
     public final static String SHORT_NAME = "scala";
     public final static String VERSION = "2.7.2";
 
-    private ScalaInterpreter interpreter; // todo check: thread safe?
+    private ScalaInterpreter interpreter;
 
     protected void activate(ComponentContext context) {
         Bundle[] bundles = context.getBundleContext().getBundles();
@@ -46,11 +46,10 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
 
         try { // handle system bundle
             URL url = bundles[0].getResource("/");
-            File file = new File(url.toURI());
-            bundleFs[0] = new PlainFile(file);
+            bundleFs[0] = new PlainFile(new File(url.toURI()));
         }
         catch (URISyntaxException e) {
-            throw initCause(new IllegalArgumentException("Cant determine url of system bundle"), e);
+            throw initCause(new IllegalArgumentException("Can't determine url of system bundle"), e);
         }
 
         URL[] bootUrls = getUrlClassLoader(bundles[0]).getURLs();
@@ -73,6 +72,7 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
     }
 
     public ScriptEngine getScriptEngine(){
+        // todo fix: return new interpreter instance on each invocation
         return new ScalaScriptEngine(interpreter, this);
     }
 

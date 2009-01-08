@@ -43,7 +43,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
     @Override
     public Object eval(String script, ScriptContext context) throws ScriptException {
         try {
-            Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+            SlingBindings bindings = getBindings(context);
             TypeHints typeHints = new TypeHints(bindings);
             Map<String, Tuple2<Object, Class<?>>> scalaBindings = new EmptyMap<String, Tuple2<Object, Class<?>>>();
             for (Object name : bindings.keySet()) {
@@ -76,11 +76,13 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
                 }
             });
 
+            Logger log = bindings.getLog(); // todo implement: pass to interpreter for logging
+
             interpreter.interprete(getScriptName(bindings), script, scalaBindings);
             stdOutWriter.flush();
         }
         catch (IOException e) {
-            throw initCause(new ScriptException("Error: Cannot execute script"), e);
+            throw initCause(new ScriptException("Error executing script"), e);
         }
         return null;
     }
@@ -95,15 +97,23 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
             }
         }
         catch (IOException e) {
-            throw initCause(new ScriptException("Error: Cannot execute script"), e);
+            throw initCause(new ScriptException("Error executing script"), e);
         }
         return eval(script.toString(), context);
     }
 
     // -----------------------------------------------------< private >---
 
-    private String getScriptName(Bindings bindings) {
-        SlingScriptHelper helper = (SlingScriptHelper) bindings.get(SlingBindings.SLING);
+    private static SlingBindings getBindings(ScriptContext context) {
+        Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        if (!(bindings instanceof SlingBindings)) {
+            throw new IllegalArgumentException("Bindings is not an instance of sling bindings");
+        }
+        return (SlingBindings) bindings;
+    }
+
+    private static String getScriptName(SlingBindings bindings) {
+        SlingScriptHelper helper = bindings.getSling();
         if (helper == null) {
             throw new IllegalArgumentException("Bindings does not contain script helper object");
         }
@@ -136,7 +146,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
             put("currentNode", NODE_TYPE);
         }};
 
-        public TypeHints(Bindings bindings) {
+        public TypeHints(SlingBindings bindings) {
             super();
             for (Object name : bindings.keySet()) {
                 setType((String) name, TYPES.get(name));

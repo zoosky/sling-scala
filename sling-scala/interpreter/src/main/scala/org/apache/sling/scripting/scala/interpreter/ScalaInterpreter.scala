@@ -24,6 +24,7 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
 
   // todo: how to redirect std err?
   def stdErr = throw new Error("unsupported: stdErr")
+  def stdErr_= (err: OutputStream) = throw new Error("unsupported: stdErr")
 
   protected val compiler: Global = new ScalaCompiler(settings, reporter, classes)
   protected val parentClassLoader: ClassLoader = getClass.getClassLoader
