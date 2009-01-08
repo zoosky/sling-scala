@@ -115,6 +115,11 @@
             <version>${sling.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.bsf</groupId>
+            <artifactId>bsf-api</artifactId>
+             <version>3.0-beta2</version>
+        </dependency>
+        <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version> 

@@ -1,5 +1,5 @@
-import scala.tools.nsc.io.{AbstractFile, VirtualFile}
-import java.io.{File, InputStream, OutputStream}
+import scala.tools.nsc.io.AbstractFile
+import java.io.{File, InputStream, OutputStream, IOException}
 import java.net.URL
 import org.osgi.framework.Bundle
 
@@ -19,10 +19,10 @@ object BundleFS {
 
       def container: AbstractFile =
         if (parent ne null) parent
-        else throw new Error("unsupported: container")
+        else throw new IOException("No container")
 
       def input: InputStream = url.openStream()
-      def output = throw new Error("unsupported: output")
+      def output = throw new IOException("not supported: output")
 
       private def getPathAndName(url: URL) = {
         val u = url.getPath
@@ -73,9 +73,7 @@ object BundleFS {
       def isDirectory: Boolean = false
       override def size: Option[Int] = Some(bundle.getEntry(fullName).openConnection().getContentLength())
       def elements: Iterator[AbstractFile] = Iterator.empty
-      def lookupName(name: String, directory: Boolean): AbstractFile = {
-        null
-      }
+      def lookupName(name: String, directory: Boolean): AbstractFile = null
     }
 
     new DirEntry(bundle.getResource("/"), null)
