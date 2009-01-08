@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 
 import scala.tools.nsc.reporters.Reporter;
 
-// todo enhance: implement Compilable!?
 public class ScalaScriptEngine extends AbstractSlingScriptEngine {
     public static final String NL = System.getProperty("line.separator");
 
@@ -53,10 +52,8 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
                 scalaBindings.put((String) name, bindings.get(name), typeHints.get(name));
             }
 
-            // todo implement: AbstractFile on top of JCR
-            // todo implement: pass AbstractFile to compiler for output (compiler.genJVM.outputDir = ...)
-            // todo implement: interpreter should check if script needs re-compilation
-            // todo implement: use AbstractFileClassLoader for execution
+            // todo implement: pass JcrFolder for outDir
+            // todo implement: pass jcrFile for source
             String scriptName = getScriptName(bindings);
             synchronized (interpreter) {
                 check(interpreter.compile(scriptName, script, scalaBindings));

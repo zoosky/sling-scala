@@ -1,21 +1,33 @@
 import scala.tools.nsc.{Settings, Global}
 import scala.tools.nsc.reporters.Reporter
+import scala.tools.nsc.interpreter.AbstractFileClassLoader
 import scala.tools.nsc.io.AbstractFile
-import scala.tools.nsc.util.BatchSourceFile
+import scala.tools.nsc.util.{SourceFile, BatchSourceFile}
 import java.net.URLClassLoader
 import java.io.{File, InputStream, OutputStream}
 
 package org.apache.sling.scripting.scala.interpreter {
 
-// todo fix: add output directory param
-// todo fix: add secondary constructors
-class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporter: Reporter) {
+class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[AbstractFile],
+                       outDir: AbstractFile) {
+
+  def this(settings: Settings, reporter: Reporter, classes: Array[AbstractFile]) =
+    this(settings, reporter, classes, null)
+
+  def this(settings: Settings, reporter: Reporter, outDir: AbstractFile) =
+    this(settings, reporter, null, outDir)
+
+  def this(settings: Settings, reporter: Reporter) =
+    this(settings, reporter, null, null)
+
   private final val NL = System.getProperty("line.separator");
 
-  protected val compiler: Global = new ScalaCompiler(settings, reporter, classes)
   protected val parentClassLoader: ClassLoader = getClass.getClassLoader
-
-  // todo: add option for compilation if out dated only
+  protected val compiler: Global = {
+    val c = new ScalaCompiler(settings, reporter, classes)
+    if (outDir != null) c.genJVM.outputDir = outDir
+    c
+  }
 
   // todo fix: use dot in name for building package structure
   protected def preProcess(name: String, code: String, bindings: Bindings): String = {
@@ -41,19 +53,33 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
     "}" + NL
   }
 
-  def compile(name: String, code: String): Reporter = {
+  protected def compile(sources: List[SourceFile]): Reporter = {
     reporter.reset
     val run = new compiler.Run
     if (reporter.hasErrors)
       reporter
     else {
-      run.compileSources(List(new BatchSourceFile(name, code.toCharArray)))
+      run.compileSources(sources)
       reporter
     }
   }
 
+  def compile(name: String, code: String): Reporter =
+    compile(List(new BatchSourceFile(name, code.toCharArray)))
+
   def compile(name: String, code: String, bindings: Bindings): Reporter =
     compile(name, preProcess(name, code, bindings))
+
+  def compile(source: AbstractFile): Reporter = {
+    // todo fix: check for mods since last compilation
+    compile(List(new BatchSourceFile(source)))
+  }
+
+  def compile(source: AbstractFile, bindings: Bindings): Reporter = {
+    // todo fix: check for mods since last compilation
+    val code = new String(source.toByteArray)
+    compile(source.name, preProcess(source.name, code, bindings))
+  }
 
   @throws(classOf[InterpreterException])
   def interprete(name: String, code: String, bindings: Bindings,
@@ -75,12 +101,28 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
     interprete(name, code, bindings, option(in), option(out))
 
   @throws(classOf[InterpreterException])
+  def interprete(source: AbstractFile, bindings: Bindings, in: Option[InputStream],
+                 out: Option[OutputStream]): Reporter = {
+    compile(source, bindings)
+    if (reporter.hasErrors)
+      reporter
+    else {
+      execute(source.name, bindings, in, out)
+    }
+  }
+
+  @throws(classOf[InterpreterException])
+  def interprete(source: AbstractFile, bindings: Bindings): Reporter =
+    interprete(source, bindings, None, None)
+
+  @throws(classOf[InterpreterException])
+  def interprete(source: AbstractFile, bindings: Bindings, in: InputStream, out: OutputStream): Reporter =
+    interprete(source, bindings, option(in), option(out))
+
+  @throws(classOf[InterpreterException])
   def execute(name: String, bindings: Bindings, in: Option[InputStream], out: Option[OutputStream]): Reporter = {
     try {
-      val classLoader = new URLClassLoader(
-        // todo fix: use compiler.genJVM.outputDir and AbstractFileClassLoader for output dir
-        Array((new File(compiler.settings.outdir.value)).toURL), parentClassLoader)
-
+      val classLoader = new AbstractFileClassLoader(compiler.genJVM.outputDir, parentClassLoader)
       val script = Class.forName(name, true, classLoader)
       val initMethod = (script
         .getDeclaredMethods

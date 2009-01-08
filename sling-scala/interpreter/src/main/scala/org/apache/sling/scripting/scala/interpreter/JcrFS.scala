@@ -1,6 +1,7 @@
 import scala.tools.nsc.io.AbstractFile
 import java.io.{File, InputStream, OutputStream, IOException, ByteArrayOutputStream, ByteArrayInputStream}
 import javax.jcr.{Session, Node, Property}
+import org.apache.sling.scripting.scala.Utils.{nullOrElse, valueOrElse}
 
 package org.apache.sling.scripting.scala.interpreter {
 
@@ -128,17 +129,15 @@ object JcrFS {
       }
     }
 
+    override def size: Option[Int] = {
+      val p = dataProperty
+      if (p == null) None
+      else Some(p.getLength.toInt)
+    }
+
     def elements: Iterator[AbstractFile] = Iterator.empty
     def lookupName(name: String, directory: Boolean): AbstractFile = null
   }
-
-  private def nullOrElse[S, T](s: S)(f: S => T): T =
-    if (s == null) null.asInstanceOf[T]
-    else f(s)
-
-  private def valueOrElse[T](t: T)(default: => T) =
-    if (t == null) default
-    else t
 
 }
 
