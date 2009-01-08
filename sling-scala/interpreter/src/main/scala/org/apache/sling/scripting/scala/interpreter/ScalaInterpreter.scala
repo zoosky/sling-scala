@@ -22,7 +22,7 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
     if (out ne null) this.out = Some(out)
   }
 
-  // todo: how to redirect std err?
+  // todo fix: redirect stdErr
   def stdErr = throw new Error("unsupported: stdErr")
   def stdErr_= (err: OutputStream) = throw new Error("unsupported: stdErr")
 
@@ -33,17 +33,19 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
     def bind(e: (String, (AnyRef, Class[_]))) =
       "val " + e._1 + " = bindings(\"" + e._1 + "\")._1.asInstanceOf[" + e._2._2.getName + "]"
 
+    // todo fix: this is not thread safe (THREAD-ISOLATED)
+    // todo fix: don't hard code new line char
+    // todo fix: reset stdIn and stdOut to their initial values
     "object " + name + " {\n" +
     "  type Bindings = Map[String, (AnyRef, Class[_])]\n" +
-    "  import java.io.{InputStream, OutputStream}\n" +
-    "  def main(bindings: Bindings, stdIn: Option[InputStream], stdOut: Option[OutputStream]) {\n" +
+    "  def main(bindings: Bindings, stdIn: Option[java.io.InputStream], stdOut: Option[java.io.OutputStream]) {\n" +
          bindings.map(bind).mkString("", "\n", "\n") +
     "    stdIn match {\n" +
-    "      case Some(in: InputStream) => Console.setIn(in)\n" +
+    "      case Some(in: java.io.InputStream) => Console.setIn(in)\n" +
     "      case _ => \n" +
     "    }\n" +
     "    stdOut match {\n" +
-    "      case Some(out: OutputStream) => Console.setOut(out)\n" +
+    "      case Some(out: java.io.OutputStream) => Console.setOut(out)\n" +
     "      case _ => \n" +
     "    }\n" +
     "    def run() {\n" +
@@ -55,7 +57,7 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
     "}\n"
   }
 
-  protected def compile(name: String, code: String): Reporter = {
+  def compile(name: String, code: String): Reporter = {
     reporter.reset
     val run = new compiler.Run
     if (reporter.hasErrors)
@@ -66,8 +68,11 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
     }
   }
 
+  def compile(name: String, code: String, bindings: Bindings): Reporter =
+    compile(name, preProcess(name, code, bindings))
+
   def interprete(name: String, code: String, bindings: Bindings): Reporter = {
-    compile(name, preProcess(name, code, bindings: Bindings))
+    compile(name, code, bindings)
     if (reporter.hasErrors)
       reporter
     else {

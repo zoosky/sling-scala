@@ -3,7 +3,6 @@ package org.apache.sling.scripting.scala.engine;
 import static org.apache.sling.scripting.scala.engine.ExceptionHelper.initCause;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -15,11 +14,12 @@ import org.apache.sling.scripting.scala.interpreter.BundleFS;
 import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
 import org.osgi.framework.Bundle;
 import org.osgi.service.component.ComponentContext;
+import org.slf4j.LoggerFactory;
 
 import scala.tools.nsc.Settings;
 import scala.tools.nsc.io.AbstractFile;
 import scala.tools.nsc.io.PlainFile;
-import scala.tools.nsc.reporters.ConsoleReporter;
+
 /**
  * @scr.component
  * @scr.service interface="javax.script.ScriptEngineFactory"
@@ -32,10 +32,58 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
     public final static String SHORT_NAME = "scala";
     public final static String VERSION = "2.7.2";
 
-    private ScalaInterpreter interpreter;
+    private ComponentContext context;
+
+    public ScalaScriptEngineFactory() {
+        super();
+        setExtensions(SCALA_SCRIPT_EXTENSION);
+        setMimeTypes(SCALA_MIME_TYPE);
+        setNames(SHORT_NAME);
+    }
 
     protected void activate(ComponentContext context) {
+        this.context = context;
+    }
+
+    public ScriptEngine getScriptEngine(){
         Bundle[] bundles = context.getBundleContext().getBundles();
+        Settings settings = createSettings(bundles);
+        return new ScalaScriptEngine(
+                new ScalaInterpreter(
+                        settings,
+                        createClasses(bundles),
+                        new LoggingReporter(
+                                LoggerFactory.getLogger(ScalaInterpreter.class),
+                                settings
+                        )
+                ),
+                this
+        );
+    }
+
+    public String getLanguageName(){
+        return SHORT_NAME;
+    }
+
+    public String getLanguageVersion(){
+        return VERSION;
+    }
+
+    // -----------------------------------------------------< private >---
+
+    private static Settings createSettings(Bundle[] bundles) {
+        Settings settings = new Settings();
+        URL[] bootUrls = getUrlClassLoader(bundles[0]).getURLs();
+        StringBuilder bootPath = new StringBuilder(settings.classpath().v());
+        for (int k = 0; k < bootUrls.length; k++) {
+            bootPath.append(PATH_SEPARATOR).append(bootUrls[k].getPath());
+        }
+
+        settings.classpath().v_$eq(bootPath.toString());
+        return settings;
+    }
+
+    private static AbstractFile[] createClasses(Bundle[] bundles) {
         AbstractFile[] bundleFs = new AbstractFile[bundles.length];
         for (int k = 1; k < bundles.length; k++) { // system bundle is special, leave it out
             bundleFs[k] = BundleFS.create(bundles[k]);
@@ -48,44 +96,8 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
         catch (URISyntaxException e) {
             throw initCause(new IllegalArgumentException("Can't determine url of system bundle"), e);
         }
-
-        URL[] bootUrls = getUrlClassLoader(bundles[0]).getURLs();
-        Settings settings = new Settings();
-        StringBuilder bootPath = new StringBuilder(settings.classpath().v());
-        for (int k = 0; k < bootUrls.length; k++) {
-            bootPath.append(PATH_SEPARATOR).append(bootUrls[k].getPath());
-        }
-
-        settings.classpath().v_$eq(bootPath.toString());
-        interpreter = new ScalaInterpreter(settings, bundleFs,
-                new ConsoleReporter(settings, null, new PrintWriter(System.out)));  // todo fix: redirect compiler messages to log
+        return bundleFs;
     }
-
-    public ScalaScriptEngineFactory() {
-        super();
-        setExtensions(SCALA_SCRIPT_EXTENSION);
-        setMimeTypes(SCALA_MIME_TYPE);
-        setNames(SHORT_NAME);
-    }
-
-    public ScriptEngine getScriptEngine(){
-        // todo fix: threading issue:
-        // - return new ScalaInterpreter instance on each call
-        // - separate calls for compile and execute
-        // - synchronize calls to compile
-        // - encapsulate reporter into ScalaInterpreter and pass logger (wrapper) on each call
-        return new ScalaScriptEngine(interpreter, this);
-    }
-
-    public String getLanguageName(){
-        return SHORT_NAME;
-    }
-
-    public String getLanguageVersion(){
-        return VERSION;
-    }
-
-    // -----------------------------------------------------< private >---
 
     private static URLClassLoader getUrlClassLoader(Bundle bundle) {
         ClassLoader classLoader = bundle.getClass().getClassLoader().getParent();

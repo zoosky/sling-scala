@@ -31,7 +31,6 @@ import scala.Tuple2;
 import scala.collection.immutable.EmptyMap;
 import scala.collection.immutable.Map;
 
-
 public class ScalaScriptEngine extends AbstractSlingScriptEngine {
     private final ScalaInterpreter interpreter;
 
@@ -59,7 +58,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
                 }
             });
 
-            // todo fix: set stdErr when ScalaInterpreter supports it
+            // todo fix: ScalaInterpreter does not yet support redirecting stdErr
             // final Writer errOutWriter = new BufferedWriter(context.getErrorWriter());
             // interpreter.stdErr_$eq(new OutputStream() {
             //     @Override
@@ -76,8 +75,8 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
                 }
             });
 
-            Logger log = bindings.getLog(); // todo implement: pass to interpreter for logging
-
+            // todo fix: synchronize compilation of scripts
+            // todo implement: cache precompiled scripts
             interpreter.interprete(getScriptName(bindings), script, scalaBindings);
             stdOutWriter.flush();
         }
@@ -93,7 +92,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         String line;
         try {
             while ((line = br.readLine()) != null) {
-                script.append(line).append("\n");
+                script.append(line).append("\n"); // todo fix: don't hard code new line char
             }
         }
         catch (IOException e) {
