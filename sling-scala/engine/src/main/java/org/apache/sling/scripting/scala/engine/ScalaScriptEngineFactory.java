@@ -27,7 +27,7 @@ import scala.tools.nsc.io.PlainFile;
 public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
     private static final String PATH_SEPARATOR = System.getProperty("path.separator");
 
-    public final static String SCALA_SCRIPT_EXTENSION = "scala";
+    public final static String[] SCALA_SCRIPT_EXTENSIONS = {"scala", "scs"};
     public final static String SCALA_MIME_TYPE = "application/x-scala";
     public final static String SHORT_NAME = "scala";
     public final static String VERSION = "2.7.2";
@@ -36,7 +36,7 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
 
     public ScalaScriptEngineFactory() {
         super();
-        setExtensions(SCALA_SCRIPT_EXTENSION);
+        setExtensions(SCALA_SCRIPT_EXTENSIONS);
         setMimeTypes(SCALA_MIME_TYPE);
         setNames(SHORT_NAME);
     }

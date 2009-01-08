@@ -77,6 +77,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
 
             // todo fix: synchronize compilation of scripts
             // todo implement: cache precompiled scripts
+            // todo fix: evaluate return value
             interpreter.interprete(getScriptName(bindings), script, scalaBindings);
             stdOutWriter.flush();
         }

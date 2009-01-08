@@ -58,14 +58,17 @@ public class ScalaTestBase extends RepositoryTestBase {
     }
 
     protected String evalScala(String code) {
-        // todo fix: make bindings more convenient to use
         Map<String, Tuple2<Object, Class<?>>> bindings = new EmptyMap<String, Tuple2<Object, Class<?>>>();
-        return evalScala("testi", code, bindings);
+        return evalScala(createScriptName(), code, bindings);
+    }
+
+    protected String evalScala(String code, Map<String, Tuple2<Object, Class<?>>> bindings) {
+        return evalScala(createScriptName(), code, bindings);
     }
 
     protected String evalScala(String name, String code, Map<String, Tuple2<Object, Class<?>>> bindings) {
         interpreterOut.reset();
-        interpreter.interprete(name, code, bindings);
+        interpreter.interprete(name, code, bindings); // todo fix evaluate return value
         return interpreterOut.toString();
     }
 
@@ -79,6 +82,10 @@ public class ScalaTestBase extends RepositoryTestBase {
 
         String code = getScript(scriptName);
         return evalScala(scriptName, code, bindings);
+    }
+
+    protected String createScriptName() {
+        return "testi";
     }
 
 }
