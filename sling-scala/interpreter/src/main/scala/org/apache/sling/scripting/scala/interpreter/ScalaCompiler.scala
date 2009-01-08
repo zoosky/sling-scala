@@ -5,7 +5,7 @@ import scala.tools.nsc.io.AbstractFile
 package org.apache.sling.scripting.scala.interpreter {
 
 class ScalaCompiler(settings: Settings, reporter: Reporter, classes: Array[AbstractFile])
-extends Global(settings, reporter) {
+  extends Global(settings, reporter) {
 
   override lazy val classPath0 = new ScalaClasspath(false && onlyPresentation)
 

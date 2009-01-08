@@ -80,10 +80,10 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
 
       val script = Class.forName(name, true, classLoader)
       val initMethod = (script
-          .getDeclaredMethods
-          .toList
-          .find(method => method.getName == "main")
-          .get)
+        .getDeclaredMethods
+        .toList
+        .find(method => method.getName == "main")
+        .get)
 
       initMethod.invoke(null, Array(bindings, in, out): _*)
       reporter

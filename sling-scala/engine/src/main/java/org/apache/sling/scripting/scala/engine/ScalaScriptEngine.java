@@ -1,5 +1,7 @@
 package org.apache.sling.scripting.scala.engine;
 
+import static org.apache.sling.scripting.scala.engine.ExceptionHelper.initCause;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -16,19 +18,19 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 
-import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
-
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.scripting.api.AbstractSlingScriptEngine;
+import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
 import org.slf4j.Logger;
 
 import scala.Tuple2;
 import scala.collection.immutable.EmptyMap;
 import scala.collection.immutable.Map;
+
 
 public class ScalaScriptEngine extends AbstractSlingScriptEngine {
     private final ScalaInterpreter interpreter;
@@ -57,7 +59,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
                 }
             });
 
-            // todo: set stdErr
+            // todo fix: set stdErr when ScalaInterpreter supports it
             // final Writer errOutWriter = new BufferedWriter(context.getErrorWriter());
             // interpreter.stdErr_$eq(new OutputStream() {
             //     @Override
@@ -74,11 +76,11 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
                 }
             });
 
-            interpreter.interprete("testi", script, scalaBindings); // todo: set proper script name
+            interpreter.interprete(getScriptName(bindings), script, scalaBindings);
             stdOutWriter.flush();
         }
         catch (IOException e) {
-            throw (ScriptException) new ScriptException("Error: Cannot execute script").initCause(e);
+            throw initCause(new ScriptException("Error: Cannot execute script"), e);
         }
         return null;
     }
@@ -89,13 +91,25 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         String line;
         try {
             while ((line = br.readLine()) != null) {
-                script.append(line).append("\n"); // todo: uses system dependend new line
+                script.append(line).append("\n");
             }
         }
         catch (IOException e) {
-            throw (ScriptException) new ScriptException("Error: Cannot execute script").initCause(e);
+            throw initCause(new ScriptException("Error: Cannot execute script"), e);
         }
         return eval(script.toString(), context);
+    }
+
+    // -----------------------------------------------------< private >---
+
+    private String getScriptName(Bindings bindings) {
+        SlingScriptHelper helper = (SlingScriptHelper) bindings.get(SlingBindings.SLING);
+        if (helper == null) {
+            throw new IllegalArgumentException("Bindings does not contain script helper object");
+        }
+        else {
+            return helper.getScript().getScriptResource().getPath();
+        }
     }
 
     @SuppressWarnings("serial")
@@ -140,7 +154,9 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
             return c == null ? Object.class : c;
         }
 
-        // todo: compile time assertion: type safety
+        /**
+         * Compile time assertion enforcing type safety
+         */
         private static class CompileTimeAssertion {
             static {
                 SlingBindings b = new SlingBindings();

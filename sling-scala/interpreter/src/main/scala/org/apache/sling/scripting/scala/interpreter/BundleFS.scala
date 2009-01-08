@@ -8,7 +8,7 @@ package org.apache.sling.scripting.scala.interpreter {
 object BundleFS {
   def create(bundle: Bundle): AbstractFile = {
     assert(bundle ne null)
-    
+
     abstract class BundleEntry(url: URL, parent: DirEntry) extends AbstractFile {
       lazy val (path: String, name: String) = getPathAndName(url)
       lazy val fullName: String = (path::name::Nil).filter(!_.isEmpty).mkString("/")
@@ -22,7 +22,7 @@ object BundleFS {
         else throw new Error("unsupported: container")
 
       def input: InputStream = url.openStream()
-      def output = throw new Error("unsupported: input")
+      def output = throw new Error("unsupported: output")
 
       private def getPathAndName(url: URL) = {
         val u = url.getPath
@@ -78,9 +78,9 @@ object BundleFS {
       }
     }
 
-    new DirEntry(bundle.getResource("/"), null) 
+    new DirEntry(bundle.getResource("/"), null)
   }
-  
+
 }
 
 }
