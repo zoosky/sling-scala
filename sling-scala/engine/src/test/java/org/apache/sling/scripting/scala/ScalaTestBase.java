@@ -1,72 +1,84 @@
 package org.apache.sling.scripting.scala;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map.Entry;
-
-import javax.script.Bindings;
+import java.io.PrintWriter;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 import org.apache.sling.commons.testing.jcr.RepositoryTestBase;
+import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
 
-import scala.tools.nsc.Interpreter;
+import scala.Console;
+import scala.Tuple2;
+import scala.collection.immutable.EmptyMap;
+import scala.collection.immutable.Map;
 import scala.tools.nsc.Settings;
+import scala.tools.nsc.reporters.ConsoleReporter;
 
-/**
- * todo fix: update to ScalaInterpreter
- * Base class to scala tests
- */
 public class ScalaTestBase extends RepositoryTestBase {
-    protected static final String SCRIPTS = "/scripts/";
+    public static final String NL = System.getProperty("line.separator");
 
-    protected String evalScala(String code, Bindings bindings)
-            throws IOException {
+    protected static final String SCRIPT_PATH = "/scripts/";
+
+    private ScalaInterpreter interpreter;
+    private ByteArrayOutputStream interpreterOut;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
 
         Settings settings = new Settings();
-        // settings.classpath().value_$eq(ScalaScriptEngine.getCompilerClassPath());
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Interpreter scalaInterpreter = new Interpreter(settings);
-        scalaInterpreter.beQuiet();
+        String testCp = System.getProperty("surefire.test.class.path");
+        String javaCp = System.getProperty("java.class.path");
+        settings.classpath().v_$eq(testCp != null ? testCp : javaCp);
 
-        if (bindings != null) {
-            for (Object o : bindings.entrySet()) {
-                @SuppressWarnings("unchecked")
-                Entry<String, Object> e = (Entry<String, Object>) o;
-                scalaInterpreter.bind(e.getKey(), e.getValue().getClass().getName(), e.getValue());
-            }
-        }
+        interpreter = new ScalaInterpreter(settings, null,
+                new ConsoleReporter(settings, null, new PrintWriter(Console.out())));
 
-        scalaInterpreter.bind("__sysout", out.getClass().getName(), out);
-        scalaInterpreter.interpret("Console.setOut(__sysout)");
-
-        scalaInterpreter.interpret(code.trim());
-        out.flush();
-        return out.toString().trim();
+        interpreterOut = new ByteArrayOutputStream();
+        interpreter.stdOut_$eq(interpreterOut);
     }
 
-    protected String evalScala(String code) throws IOException {
-        return evalScala(code, null);
-    }
+    protected String getScript(String scriptName) throws URISyntaxException, IOException {
+        URL url = getClass().getResource(SCRIPT_PATH + scriptName);
+        BufferedReader reader = new BufferedReader(new FileReader(new File(url.toURI())));
 
-    protected String evalScalaScript(String name, Bindings bindings) throws IOException {
-        InputStream is = getClass().getResourceAsStream(name);
-        if (is == null) {
-            throw new IOException("Class resource not found at path " + name);
+        StringBuilder script = new StringBuilder();
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            script.append(line).append(NL);
         }
 
-        byte[] buffer = new byte[16384];
-        int n;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        while ((n = is.read(buffer, 0, buffer.length)) > 0) {
-            bos.write(buffer, 0, n);
-        }
-
-        String encoding = "UTF-8";
-        return evalScala(new String(buffer, encoding), bindings);
+        return script.toString();
     }
 
-    protected String evalScalaScript(String name) throws IOException {
-        return evalScalaScript(name, null);
+    protected String evalScala(String code) {
+        // todo fix: make bindings more convenient to use
+        Map<String, Tuple2<Object, Class<?>>> bindings = new EmptyMap<String, Tuple2<Object, Class<?>>>();
+        return evalScala("testi", code, bindings);
+    }
+
+    protected String evalScala(String name, String code, Map<String, Tuple2<Object, Class<?>>> bindings) {
+        interpreterOut.reset();
+        interpreter.interprete(name, code, bindings);
+        return interpreterOut.toString();
+    }
+
+    protected String evalScalaScript(String scriptName) throws URISyntaxException, IOException {
+        String code = getScript(scriptName);
+        return evalScala(code);
+    }
+
+    protected String evalScalaScript(String scriptName, Map<String, Tuple2<Object, Class<?>>> bindings)
+            throws URISyntaxException, IOException {
+
+        String code = getScript(scriptName);
+        return evalScala(scriptName, code, bindings);
     }
 
 }

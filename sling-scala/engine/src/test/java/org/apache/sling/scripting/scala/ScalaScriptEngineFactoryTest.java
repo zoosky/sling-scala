@@ -1,6 +1,5 @@
 package org.apache.sling.scripting.scala;
 
-import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 
 import junit.framework.TestCase;
@@ -15,8 +14,13 @@ public class ScalaScriptEngineFactoryTest extends TestCase {
     }
 
     public void testScriptEngineFactoryEngine() {
-        ScriptEngine scalaEngine = new ScalaScriptEngineFactory().getScriptEngine();
-        assertNotNull(scalaEngine);
+        try {
+            new ScalaScriptEngineFactory().getScriptEngine();
+            assertTrue("Expecting IllegalStateException", false);
+        }
+        catch (IllegalStateException e) {
+            // expected
+        }
     }
 
     public void testScriptEngineFactoryLanguage() {

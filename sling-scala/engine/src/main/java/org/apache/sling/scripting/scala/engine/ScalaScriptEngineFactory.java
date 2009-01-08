@@ -46,6 +46,10 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
     }
 
     public ScriptEngine getScriptEngine(){
+        if (context == null) {
+            throw new IllegalStateException("Bundle not activated");
+        }
+
         Bundle[] bundles = context.getBundleContext().getBundles();
         Settings settings = createSettings(bundles);
         return new ScalaScriptEngine(
