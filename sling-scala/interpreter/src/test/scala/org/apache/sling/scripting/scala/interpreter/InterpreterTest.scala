@@ -1,5 +1,5 @@
 import junit.framework.TestCase
-import junit.framework.Assert
+import junit.framework.Assert.{assertTrue}
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.ConsoleReporter
 
@@ -24,7 +24,7 @@ class InterpreterTest extends TestCase {
 
     val code = "println(msg + \": \" + time)"
     interpreter.interprete("testi", code, bindings, None, Some(out))
-    Assert.assertTrue(out.toString.startsWith("Hello world: "))
+    assertTrue(out.toString.startsWith("Hello world: "))
   }
 
 }

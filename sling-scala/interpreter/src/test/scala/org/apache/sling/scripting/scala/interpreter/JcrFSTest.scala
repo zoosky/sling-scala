@@ -1,6 +1,6 @@
 import java.io.{PrintWriter, InputStreamReader}
 import javax.jcr.{Session, Repository, Node, SimpleCredentials}
-import junit.framework.{TestCase}
+import junit.framework.TestCase
 import junit.framework.Assert.{assertEquals, assertTrue, assertFalse}
 import org.apache.sling.scripting.scala.interpreter.JcrFS.{JcrNode, JcrFile, JcrFolder}
 import org.apache.jackrabbit.core.{TransientRepository}
