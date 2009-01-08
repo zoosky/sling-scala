@@ -15,7 +15,7 @@ class InterpreterTest extends TestCase {
     settings.classpath.value = if (testCp != null) testCp else javaCp
 
     val interpreter = new ScalaInterpreter(settings, null, new
-          ConsoleReporter(settings, null, new java.io.PrintWriter(Console.out)))
+          ConsoleReporter(settings, null, new java.io.PrintWriter(Console.err)))
 
     val out = new java.io.ByteArrayOutputStream
     interpreter.stdOut = out

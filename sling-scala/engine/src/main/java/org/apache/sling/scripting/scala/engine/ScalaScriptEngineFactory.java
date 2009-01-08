@@ -56,7 +56,7 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
                 new ScalaInterpreter(
                         settings,
                         createClasses(bundles),
-                        new LoggingReporter(
+                        new LogReporter(
                                 LoggerFactory.getLogger(ScalaInterpreter.class),
                                 settings
                         )

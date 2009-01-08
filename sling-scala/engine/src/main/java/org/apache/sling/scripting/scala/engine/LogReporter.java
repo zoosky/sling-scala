@@ -3,21 +3,19 @@ package org.apache.sling.scripting.scala.engine;
 import org.slf4j.Logger;
 
 import scala.tools.nsc.Settings;
-import scala.tools.nsc.reporters.AbstractReporter;
 import scala.tools.nsc.util.Position;
 
-public class LoggingReporter extends AbstractReporter {
+public class LogReporter extends BacklogReporter {
     private final Logger logger;
-    private final Settings settings;
 
-    public LoggingReporter(Logger logger, Settings settings) {
-        super();
+    public LogReporter(Logger logger, Settings settings) {
+        super(settings);
         this.logger = logger;
-        this.settings = settings;
     }
 
     @Override
     public void display(Position pos, String msg, Severity severity) {
+        super.display(pos, msg, severity);
         if (INFO().equals(severity)) {
             logger.info("{}: {}", msg, pos);
         }
@@ -30,16 +28,6 @@ public class LoggingReporter extends AbstractReporter {
         else {
             throw new IllegalArgumentException("Severtiy out of range");
         }
-    }
-
-    @Override
-    public void displayPrompt() {
-        // empty
-    }
-
-    @Override
-    public Settings settings() {
-        return settings;
     }
 
 }

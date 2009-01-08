@@ -8,6 +8,7 @@ import java.io.{File, InputStream, OutputStream}
 package org.apache.sling.scripting.scala.interpreter {
 
 class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporter: Reporter) {
+  private final val NL = System.getProperty("line.separator");
 
   private var in: Option[InputStream] = None
   def stdIn = in
@@ -32,29 +33,22 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
     def bind(a: (String, Argument[_])) =
       "val " + a._1 + " = bindings.getValue(\"" + a._1 + "\").asInstanceOf[" + a._2.getType.getName + "]"
 
-    // todo fix: this is not thread safe (THREAD-ISOLATED)
-    // todo fix: don't hard code new line char
-    // todo fix: reset stdIn and stdOut to their initial values
-    "object " + name + " {\n" +
-    "  def main(bindings: org.apache.sling.scripting.scala.interpreter.Bindings,\n" +
-    "           stdIn: Option[java.io.InputStream],\n" +
-    "           stdOut: Option[java.io.OutputStream]) {\n" +
-         bindings.map(bind).mkString("", "\n", "\n") +
-    "    stdIn match {\n" +
-    "      case Some(in: java.io.InputStream) => Console.setIn(in)\n" +
-    "      case _ => \n" +
-    "    }\n" +
-    "    stdOut match {\n" +
-    "      case Some(out: java.io.OutputStream) => Console.setOut(out)\n" +
-    "      case _ => \n" +
-    "    }\n" +
-    "    def run() {\n" +
-          code + "\n" +
-    "      return\n" +
-    "    }\n" +
-    "    run\n" +
-    "  }\n" +
-    "}\n"
+    "object " + name + " {" + NL +
+    "  def main(bindings: org.apache.sling.scripting.scala.interpreter.Bindings," + NL +
+    "           stdIn: java.io.InputStream," + NL +
+    "           stdOut: java.io.OutputStream) {" + NL +
+    "    def run() {" + NL +
+           bindings.map(bind).mkString("", NL, NL) +
+           code + "" + NL +
+    "      return" + NL +
+    "    }" + NL +
+    "    Console.withIn(stdIn) {" + NL +
+    "      Console.withOut(stdOut) {" + NL +
+    "        run" + NL +
+    "      }" + NL +
+    "    }" + NL +
+    "  }" + NL +
+    "}" + NL
   }
 
   def compile(name: String, code: String): Reporter = {
@@ -91,7 +85,8 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
         .find(method => method.getName == "main")
         .get)
 
-      initMethod.invoke(null, Array(bindings, in, out): _*)
+      initMethod.invoke(null, Array(bindings, in.getOrElse(java.lang.System.in),
+                                              out.getOrElse(java.lang.System.out)): _*)
       reporter
   }
 

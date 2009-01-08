@@ -28,6 +28,8 @@ import org.apache.sling.scripting.scala.interpreter.ScalaBindings;
 import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
 import org.slf4j.Logger;
 
+import scala.tools.nsc.reporters.Reporter;
+
 public class ScalaScriptEngine extends AbstractSlingScriptEngine {
     public static final String NL = System.getProperty("line.separator");
 
@@ -56,7 +58,7 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
                 }
             });
 
-            // todo fix: ScalaInterpreter does not (yet) support redirecting stdErr
+            // todo fix: ScalaInterpreter does not (yet?) support redirecting stdErr
             // final Writer errOutWriter = new BufferedWriter(context.getErrorWriter());
             // interpreter.stdErr_$eq(new OutputStream() {
             //     @Override
@@ -75,9 +77,11 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
 
             // todo fix: synchronize compilation of scripts
             // todo implement: cache precompiled scripts
-            // todo fix: evaluate return value
-            interpreter.interprete(getScriptName(bindings), script, scalaBindings);
+            Reporter result = interpreter.interprete(getScriptName(bindings), script, scalaBindings);
             stdOutWriter.flush();
+            if (result.hasErrors()) {
+                throw new ScriptException(result.toString());
+            }
         }
         catch (IOException e) {
             throw initCause(new ScriptException("Error executing script"), e);
