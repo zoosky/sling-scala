@@ -13,7 +13,7 @@ import javax.script.ScriptException;
 
 import org.apache.sling.scripting.scala.engine.ScalaScriptEngineFactory;
 
-// todo add tests
+// todo implement: add tests
 public class ScalaScriptEngineTest extends ScalaTestBase {
 
     private ScriptEngine scalaScriptEngine;

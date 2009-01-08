@@ -13,7 +13,7 @@ import scala.tools.nsc.Interpreter;
 import scala.tools.nsc.Settings;
 
 /**
- * todo: update to ScalaInterpreter
+ * todo fix: update to ScalaInterpreter
  * Base class to scala tests
  */
 public class ScalaTestBase extends RepositoryTestBase {

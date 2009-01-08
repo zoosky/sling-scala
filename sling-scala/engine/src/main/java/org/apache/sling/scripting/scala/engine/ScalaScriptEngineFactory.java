@@ -15,14 +15,11 @@ import org.apache.sling.scripting.scala.interpreter.BundleFS;
 import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
 import org.osgi.framework.Bundle;
 import org.osgi.service.component.ComponentContext;
-import org.slf4j.Logger;
 
 import scala.tools.nsc.Settings;
 import scala.tools.nsc.io.AbstractFile;
 import scala.tools.nsc.io.PlainFile;
 import scala.tools.nsc.reporters.ConsoleReporter;
-import scala.tools.nsc.reporters.Reporter;
-import scala.tools.nsc.util.Position;
 /**
  * @scr.component
  * @scr.service interface="javax.script.ScriptEngineFactory"
@@ -61,7 +58,7 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
 
         settings.classpath().v_$eq(bootPath.toString());
         interpreter = new ScalaInterpreter(settings, bundleFs,
-                new ConsoleReporter(settings, null, new PrintWriter(System.out)));  // todo: redirect compiler messages to log
+                new ConsoleReporter(settings, null, new PrintWriter(System.out)));  // todo fix: redirect compiler messages to log
     }
 
     public ScalaScriptEngineFactory() {
@@ -72,7 +69,11 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
     }
 
     public ScriptEngine getScriptEngine(){
-        // todo fix: return new interpreter instance on each invocation
+        // todo fix: threading issue:
+        // - return new ScalaInterpreter instance on each call
+        // - separate calls for compile and execute
+        // - synchronize calls to compile
+        // - encapsulate reporter into ScalaInterpreter and pass logger (wrapper) on each call
         return new ScalaScriptEngine(interpreter, this);
     }
 
@@ -92,33 +93,6 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
             throw new IllegalArgumentException("Classloader of bundle is not a URLClassLoader");
         }
         return (URLClassLoader) classLoader;
-    }
-
-    // todo fix: use for redirecting compiler output
-    private class LogReporter extends Reporter {
-        private final Logger log;
-
-        public LogReporter(Logger log) {
-            super();
-            this.log = log;
-        }
-
-        @Override
-        public void info0(Position pos, String msg, Severity severity, boolean force) {
-            if (INFO().equals(severity)) {
-                log.info("{}: {}", pos, msg);
-            }
-            else if (WARNING().equals(severity)) {
-                log.warn("{}: {}", pos, msg);
-            }
-            else if (ERROR().equals(severity)) {
-                log.error("{}: {}", pos, msg);
-            }
-            else {
-                log.warn("{}: {}", pos, msg);
-            }
-        }
-
     }
 
 }
