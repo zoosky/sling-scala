@@ -9,7 +9,10 @@ class InterpreterTest extends TestCase {
 
    def testScalaInterpreter() {
     val settings = new Settings
-    settings.classpath.value = System.getProperty("java.class.path")
+
+    val testCp = System.getProperty("surefire.test.class.path")
+    val javaCp = System.getProperty("java.class.path")
+    settings.classpath.value = if (testCp != null) testCp else javaCp
 
     val interpreter = new ScalaInterpreter(settings, null, new
           ConsoleReporter(settings, null, new java.io.PrintWriter(Console.out)))
