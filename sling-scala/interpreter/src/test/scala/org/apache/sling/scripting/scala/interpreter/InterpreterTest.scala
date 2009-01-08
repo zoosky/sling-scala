@@ -1,5 +1,5 @@
 import junit.framework.TestCase
-import junit.framework.Assert.assertEquals
+import junit.framework.Assert.{assertEquals, assertFalse}
 import scala.tools.nsc.Settings
 import scala.tools.nsc.io.VirtualDirectory
 import scala.tools.nsc.reporters.ConsoleReporter
@@ -51,7 +51,6 @@ class InterpreterTest extends TestCase {
   def testScalaInterpreter {
     val outdir = new VirtualDirectory("outdir", None)
     val interpreter = new ScalaInterpreter(settings, reporter(settings), outdir)
-    val out = new java.io.ByteArrayOutputStream
 
     val bindings = new ScalaBindings
     val time = java.util.Calendar.getInstance.getTime
@@ -60,8 +59,13 @@ class InterpreterTest extends TestCase {
 
     val code = "print(msg + \": \" + time)"
 
-    interpreter.interprete("testi", code, bindings, None, Some(out))
-    assertEquals("Hello world: " + time, out.toString)
+    // todo fix: uncomment when trac-1618 is fixed
+    for (name <- /*"org.apache.sling.scripting.scala.interpreter.Testi"::*/"Testi"::Nil) {
+      val out = new java.io.ByteArrayOutputStream
+      val result = interpreter.interprete(name, code, bindings, None, Some(out))
+      assertFalse(result.hasErrors)
+      assertEquals("Hello world: " + time, out.toString)
+    }
   }
 
   def testScalaInterpreterWithJcr {
@@ -72,20 +76,54 @@ class InterpreterTest extends TestCase {
     val outDir = appDir.subdirectoryNamed("outdir")
     val srcDir = appDir.subdirectoryNamed("srcdir")
     val interpreter = new ScalaInterpreter(settings, reporter(settings), outDir)
-    val out = new java.io.ByteArrayOutputStream
 
     val bindings = new ScalaBindings
     val time = java.util.Calendar.getInstance.getTime
     bindings.put("msg", "Hello world", classOf[String])
     bindings.put("time", time, classOf[java.util.Date])
 
-    val src = srcDir.fileNamed("testi")
+    val src = srcDir.fileNamed("Testi")
     val writer = new PrintWriter(src.output)
     writer.print("print(msg + \": \" + time)")
     writer.close
 
-    interpreter.interprete(src, bindings, None, Some(out))
-    assertEquals("Hello world: " + time, out.toString)
+    for (name <- "org.apache.sling.scripting.scala.interpreter.Testi"::"Testi"::Nil) {
+      val out = new java.io.ByteArrayOutputStream
+      val result = interpreter.interprete(name, src, bindings, None, Some(out))
+      assertFalse(result.hasErrors)
+      assertEquals("Hello world: " + time, out.toString)
+    }
+  }
+
+  def testCompileExecute {
+    val appNode = testRoot.addNode("app", "nt:folder")
+    testRoot.save()
+
+    val appDir = JcrFS.create(appNode)
+    val outDir = appDir.subdirectoryNamed("outdir")
+    val srcDir = appDir.subdirectoryNamed("srcdir")
+    val interpreter = new ScalaInterpreter(settings, reporter(settings), outDir)
+
+    val bindings = new ScalaBindings
+    val time = java.util.Calendar.getInstance.getTime
+    bindings.put("msg", "Hello world", classOf[String])
+    bindings.put("time", time, classOf[java.util.Date])
+
+    val src = srcDir.fileNamed("Testi")
+    val writer = new PrintWriter(src.output)
+    writer.print("print(msg + \": \" + time)")
+    writer.close
+
+    for (name <- "org.apache.sling.scripting.scala.interpreter.Testi"::"Testi"::Nil) {
+      val out = new java.io.ByteArrayOutputStream
+      var result = interpreter.compile(name, src, bindings)
+      assertFalse(result.hasErrors)
+
+      result = interpreter.execute(name, bindings, None, Some(out))
+      assertFalse(result.hasErrors)
+
+      assertEquals("Hello world: " + time, out.toString)
+    }
   }
 
 }

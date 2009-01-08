@@ -55,11 +55,11 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
         return new ScalaScriptEngine(
                 new ScalaInterpreter(
                         settings,
-                        createClasses(bundles),
                         new LogReporter(
                                 LoggerFactory.getLogger(ScalaInterpreter.class),
                                 settings
-                        )
+                        ),
+                        createClasses(bundles)
                 ),
                 this
         );

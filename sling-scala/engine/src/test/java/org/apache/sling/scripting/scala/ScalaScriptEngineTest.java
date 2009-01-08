@@ -1,8 +1,11 @@
 package org.apache.sling.scripting.scala;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -10,7 +13,11 @@ import javax.naming.NamingException;
 import javax.script.ScriptException;
 
 import org.apache.sling.scripting.scala.interpreter.InterpreterException;
+import org.apache.sling.scripting.scala.interpreter.JcrFS;
 import org.apache.sling.scripting.scala.interpreter.ScalaBindings;
+import org.apache.sling.scripting.scala.interpreter.JcrFS.JcrNode;
+
+import scala.tools.nsc.io.AbstractFile;
 
 public class ScalaScriptEngineTest extends ScalaTestBase {
 
@@ -63,6 +70,25 @@ public class ScalaScriptEngineTest extends ScalaTestBase {
         ScalaBindings bindings = new ScalaBindings();
         bindings.put("n", n, Node.class);
         assertEquals(n.getPath(), evalScala(code, bindings));
+    }
+
+    public void testEvalJcr() throws RepositoryException, NamingException, ScriptException {
+        JcrNode appDir = JcrFS.create(getAppNode());
+        AbstractFile srcDir = appDir.subdirectoryNamed("srcdir");
+
+        ScalaBindings bindings = new ScalaBindings();
+        Date time = Calendar.getInstance().getTime();
+        bindings.put("msg", "Hello world", String.class);
+        bindings.put("time", time, Date.class);
+
+        AbstractFile src = srcDir.fileNamed("Testi");
+        PrintWriter writer = new PrintWriter(src.output());
+        writer.print("print(msg + \": \" + time)");
+        writer.close();
+
+        for(String name : new String[]{"org.apache.sling.scripting.scala.interpreter.Testi", "Testi"}) {
+            evalScala(name, src, bindings);
+        }
     }
 
 }

@@ -9,16 +9,20 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import javax.jcr.Node;
 import javax.script.ScriptException;
 
 import org.apache.sling.commons.testing.jcr.RepositoryTestBase;
 import org.apache.sling.scripting.scala.engine.BacklogReporter;
 import org.apache.sling.scripting.scala.interpreter.Bindings;
 import org.apache.sling.scripting.scala.interpreter.InterpreterException;
+import org.apache.sling.scripting.scala.interpreter.JcrFS;
 import org.apache.sling.scripting.scala.interpreter.ScalaBindings;
 import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
+import org.apache.sling.scripting.scala.interpreter.JcrFS.JcrNode;
 
 import scala.tools.nsc.Settings;
+import scala.tools.nsc.io.AbstractFile;
 import scala.tools.nsc.reporters.Reporter;
 
 public class ScalaTestBase extends RepositoryTestBase {
@@ -26,23 +30,34 @@ public class ScalaTestBase extends RepositoryTestBase {
 
     protected static final String SCRIPT_PATH = "/scripts/";
 
+    private Node appNode;
     private ScalaInterpreter interpreter;
     private ByteArrayOutputStream interpreterOut;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        Node testRoot = getTestRootNode();
+        appNode = testRoot.addNode("app", "nt:folder");
+        getSession().save();
+
         Settings settings = new Settings();
         String testCp = System.getProperty("surefire.test.class.path");
         String javaCp = System.getProperty("java.class.path");
         settings.classpath().v_$eq(testCp != null ? testCp : javaCp);
-        interpreter = new ScalaInterpreter(settings, null, new BacklogReporter(settings));
+        JcrNode appDir = JcrFS.create(appNode);
+        AbstractFile outDir = appDir.subdirectoryNamed("outdir");
+        interpreter = new ScalaInterpreter(settings, new BacklogReporter(settings), outDir);
         interpreterOut = new ByteArrayOutputStream();
     }
 
     @Override
     protected void tearDown() {
         interpreter = null;
+    }
+
+    protected Node getAppNode() {
+        return appNode;
     }
 
     protected String getScript(String scriptName) throws URISyntaxException, IOException {
@@ -94,6 +109,20 @@ public class ScalaTestBase extends RepositoryTestBase {
 
         String code = getScript(scriptName);
         return evalScala(scriptName, code, bindings);
+    }
+
+    protected String evalScala(String name, AbstractFile src, ScalaBindings bindings) throws ScriptException {
+        try {
+            interpreterOut.reset();
+            Reporter result = interpreter.interprete(name, src, bindings, null, interpreterOut);
+            if (result.hasErrors()) {
+                throw new ScriptException(result.toString());
+            }
+            return interpreterOut.toString();
+        }
+        catch (InterpreterException e) {
+            throw new ScriptException(e);
+        }
     }
 
     protected String createScriptName() {

@@ -23,18 +23,30 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
   private final val NL = System.getProperty("line.separator");
 
   protected val parentClassLoader: ClassLoader = getClass.getClassLoader
+
   protected val compiler: Global = {
     val c = new ScalaCompiler(settings, reporter, classes)
     if (outDir != null) c.genJVM.outputDir = outDir
     c
   }
 
-  // todo fix: use dot in name for building package structure
+  protected def packetize(name: String): List[String] =
+    name.split('.').toList
+
   protected def preProcess(name: String, code: String, bindings: Bindings): String = {
     def bind(a: (String, Argument[_])) =
       "val " + a._1 + " = bindings.getValue(\"" + a._1 + "\").asInstanceOf[" + a._2.getType.getName + "]"
 
-    "object " + name + " {" + NL +
+    val compounds = packetize(name)
+
+    def packageDeclaration =
+      if (compounds.size > 1) compounds.dropRight(1).mkString("package ", ".", "") + NL
+      else ""
+
+    def className = compounds.last
+
+    packageDeclaration +
+    "object " + className + " {" + NL +
     "  def main(bindings: org.apache.sling.scripting.scala.interpreter.Bindings," + NL +
     "           stdIn: java.io.InputStream," + NL +
     "           stdOut: java.io.OutputStream) {" + NL +
@@ -75,10 +87,10 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
     compile(List(new BatchSourceFile(source)))
   }
 
-  def compile(source: AbstractFile, bindings: Bindings): Reporter = {
+  def compile(name: String, source: AbstractFile, bindings: Bindings): Reporter = {
     // todo fix: check for mods since last compilation
     val code = new String(source.toByteArray)
-    compile(source.name, preProcess(source.name, code, bindings))
+    compile(name, preProcess(name, code, bindings))
   }
 
   @throws(classOf[InterpreterException])
@@ -101,23 +113,24 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
     interprete(name, code, bindings, option(in), option(out))
 
   @throws(classOf[InterpreterException])
-  def interprete(source: AbstractFile, bindings: Bindings, in: Option[InputStream],
-                 out: Option[OutputStream]): Reporter = {
-    compile(source, bindings)
+  def interprete(name: String, source: AbstractFile, bindings: Bindings,
+                 in: Option[InputStream], out: Option[OutputStream]): Reporter = {
+    compile(name, source, bindings)
     if (reporter.hasErrors)
       reporter
     else {
-      execute(source.name, bindings, in, out)
+      execute(name, bindings, in, out)
     }
   }
 
   @throws(classOf[InterpreterException])
-  def interprete(source: AbstractFile, bindings: Bindings): Reporter =
-    interprete(source, bindings, None, None)
+  def interprete(name: String, source: AbstractFile, bindings: Bindings): Reporter =
+    interprete(name, source, bindings, None, None)
 
   @throws(classOf[InterpreterException])
-  def interprete(source: AbstractFile, bindings: Bindings, in: InputStream, out: OutputStream): Reporter =
-    interprete(source, bindings, option(in), option(out))
+  def interprete(name: String, source: AbstractFile, bindings: Bindings,
+                 in: InputStream, out: OutputStream): Reporter =
+    interprete(name, source, bindings, option(in), option(out))
 
   @throws(classOf[InterpreterException])
   def execute(name: String, bindings: Bindings, in: Option[InputStream], out: Option[OutputStream]): Reporter = {
