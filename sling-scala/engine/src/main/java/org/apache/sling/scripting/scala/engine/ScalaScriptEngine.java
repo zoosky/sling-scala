@@ -24,6 +24,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.scripting.api.AbstractSlingScriptEngine;
+import org.apache.sling.scripting.scala.interpreter.InterpreterException;
 import org.apache.sling.scripting.scala.interpreter.ScalaBindings;
 import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
 import org.slf4j.Logger;
@@ -84,6 +85,9 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
             }
         }
         catch (IOException e) {
+            throw initCause(new ScriptException("Error executing script"), e);
+        }
+        catch (InterpreterException e) {
             throw initCause(new ScriptException("Error executing script"), e);
         }
         return null;

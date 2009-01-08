@@ -9,6 +9,7 @@ import javax.jcr.RepositoryException;
 import javax.naming.NamingException;
 import javax.script.ScriptException;
 
+import org.apache.sling.scripting.scala.interpreter.InterpreterException;
 import org.apache.sling.scripting.scala.interpreter.ScalaBindings;
 
 public class ScalaScriptEngineTest extends ScalaTestBase {
@@ -34,17 +35,19 @@ public class ScalaScriptEngineTest extends ScalaTestBase {
         }
     }
 
-    public void testError() throws ScriptException {
+    public void testError() {
         String err = "Some error here";
         String code = "throw new Error(\"" + err + "\")";
         try {
             evalScala(code);
             assertTrue("Expecting InvocationTargetException", false);
         }
-        catch (InvocationTargetException e) {
+        catch (ScriptException e) {
             Throwable inner = e.getCause();
-            assertEquals("Inner exception is java.lang.Error", Error.class, inner.getClass());
-            assertEquals("Inner exception message is \"" + err + "\"", err, inner.getMessage());
+            assertEquals("Inner exception is InterpreterException", InterpreterException.class, inner.getClass());
+            inner = inner.getCause();
+            assertEquals("Inner inner exception is java.lang.Error", Error.class, inner.getClass());
+            assertEquals("Inner inner exception message is \"" + err + "\"", err, inner.getMessage());
         }
     }
 

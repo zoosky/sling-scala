@@ -14,6 +14,7 @@ import javax.script.ScriptException;
 import org.apache.sling.commons.testing.jcr.RepositoryTestBase;
 import org.apache.sling.scripting.scala.engine.BacklogReporter;
 import org.apache.sling.scripting.scala.interpreter.Bindings;
+import org.apache.sling.scripting.scala.interpreter.InterpreterException;
 import org.apache.sling.scripting.scala.interpreter.ScalaBindings;
 import org.apache.sling.scripting.scala.interpreter.ScalaInterpreter;
 
@@ -59,22 +60,27 @@ public class ScalaTestBase extends RepositoryTestBase {
         return script.toString();
     }
 
-    protected String evalScala(String code) throws ScriptException, InvocationTargetException {
+    protected String evalScala(String code) throws ScriptException {
         Bindings bindings = new ScalaBindings();
         return evalScala(createScriptName(), code, bindings);
     }
 
-    protected String evalScala(String code, Bindings bindings) throws ScriptException, InvocationTargetException {
+    protected String evalScala(String code, Bindings bindings) throws ScriptException {
         return evalScala(createScriptName(), code, bindings);
     }
 
-    protected String evalScala(String name, String code, Bindings bindings) throws ScriptException, InvocationTargetException {
-        interpreterOut.reset();
-        Reporter result = interpreter.interprete(name, code, bindings);
-        if (result.hasErrors()) {
-            throw new ScriptException(result.toString());
+    protected String evalScala(String name, String code, Bindings bindings) throws ScriptException {
+        try {
+            interpreterOut.reset();
+            Reporter result = interpreter.interprete(name, code, bindings);
+            if (result.hasErrors()) {
+                throw new ScriptException(result.toString());
+            }
+            return interpreterOut.toString();
         }
-        return interpreterOut.toString();
+        catch (InterpreterException e) {
+            throw new ScriptException(e);
+        }
     }
 
     protected String evalScalaScript(String scriptName) throws URISyntaxException, IOException,
@@ -85,7 +91,7 @@ public class ScalaTestBase extends RepositoryTestBase {
     }
 
     protected String evalScalaScript(String scriptName, Bindings bindings)
-            throws URISyntaxException, IOException, ScriptException, InvocationTargetException {
+            throws URISyntaxException, IOException, ScriptException {
 
         String code = getScript(scriptName);
         return evalScala(scriptName, code, bindings);

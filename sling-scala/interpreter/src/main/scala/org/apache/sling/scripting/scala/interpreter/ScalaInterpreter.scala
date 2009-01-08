@@ -65,6 +65,7 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
   def compile(name: String, code: String, bindings: Bindings): Reporter =
     compile(name, preProcess(name, code, bindings))
 
+  @throws(classOf[InterpreterException])
   def interprete(name: String, code: String, bindings: Bindings): Reporter = {
     compile(name, code, bindings)
     if (reporter.hasErrors)
@@ -74,7 +75,9 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
     }
   }
 
+  @throws(classOf[InterpreterException])
   def execute(name: String, bindings: Bindings) = {
+    try {
       val classLoader = new URLClassLoader(
         Array((new File(compiler.settings.outdir.value)).toURL), parentClassLoader)
 
@@ -88,6 +91,13 @@ class ScalaInterpreter(settings: Settings, classes: Array[AbstractFile], reporte
       initMethod.invoke(null, Array(bindings, in.getOrElse(java.lang.System.in),
                                               out.getOrElse(java.lang.System.out)): _*)
       reporter
+    }
+    catch {
+      case e: java.lang.reflect.InvocationTargetException =>
+        throw new InterpreterException("Error executing " + name, e.getTargetException)
+      case e: Exception =>
+        throw new InterpreterException("Error executing " + name, e)
+    }
   }
 
 }
