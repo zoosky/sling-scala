@@ -38,7 +38,6 @@ public class ScalaTestBase extends RepositoryTestBase {
         settings.classpath().v_$eq(testCp != null ? testCp : javaCp);
         interpreter = new ScalaInterpreter(settings, null, new BacklogReporter(settings));
         interpreterOut = new ByteArrayOutputStream();
-        interpreter.stdOut_$eq(interpreterOut);
     }
 
     @Override
@@ -72,7 +71,7 @@ public class ScalaTestBase extends RepositoryTestBase {
     protected String evalScala(String name, String code, Bindings bindings) throws ScriptException {
         try {
             interpreterOut.reset();
-            Reporter result = interpreter.interprete(name, code, bindings);
+            Reporter result = interpreter.interprete(name, code, bindings, null, interpreterOut);
             if (result.hasErrors()) {
                 throw new ScriptException(result.toString());
             }

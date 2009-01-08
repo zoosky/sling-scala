@@ -18,14 +18,12 @@ class InterpreterTest extends TestCase {
           ConsoleReporter(settings, null, new java.io.PrintWriter(Console.err)))
 
     val out = new java.io.ByteArrayOutputStream
-    interpreter.stdOut = out
-
     val bindings = new ScalaBindings
     bindings.put("msg", "Hello world", classOf[String])
     bindings.put("time", java.util.Calendar.getInstance.getTime, classOf[java.util.Date])
 
     val code = "println(msg + \": \" + time)"
-    interpreter.interprete("testi", code, bindings)
+    interpreter.interprete("testi", code, bindings, None, Some(out))
     Assert.assertTrue(out.toString.startsWith("Hello world: "))
   }
 

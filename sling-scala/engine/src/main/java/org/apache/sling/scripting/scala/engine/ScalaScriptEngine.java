@@ -9,8 +9,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.script.Bindings;
@@ -31,6 +32,7 @@ import org.slf4j.Logger;
 
 import scala.tools.nsc.reporters.Reporter;
 
+// todo enhance: implement Compilable!?
 public class ScalaScriptEngine extends AbstractSlingScriptEngine {
     public static final String NL = System.getProperty("line.separator");
 
@@ -51,41 +53,15 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
                 scalaBindings.put((String) name, bindings.get(name), typeHints.get(name));
             }
 
-            final Writer stdOutWriter = new BufferedWriter(context.getWriter());
-            interpreter.stdOut_$eq(new OutputStream() {
-                @Override
-                public void write(int b) throws IOException {
-                    stdOutWriter.write(b);
-                }
-            });
-
-            // todo fix: ScalaInterpreter does not (yet?) support redirecting stdErr
-            // final Writer errOutWriter = new BufferedWriter(context.getErrorWriter());
-            // interpreter.stdErr_$eq(new OutputStream() {
-            //     @Override
-            //     public void write(int b) throws IOException {
-            //         errOutWriter.write(b);
-            //     }
-            // });
-
-            final Reader stdInReader = new BufferedReader(context.getReader());
-            interpreter.stdIn_$eq(new InputStream() {
-                @Override
-                public int read() throws IOException {
-                    return stdInReader.read();
-                }
-            });
-
-            // todo fix: synchronize compilation of scripts
-            // todo implement: cache precompiled scripts
-            Reporter result = interpreter.interprete(getScriptName(bindings), script, scalaBindings);
-            stdOutWriter.flush();
-            if (result.hasErrors()) {
-                throw new ScriptException(result.toString());
+            // todo implement: AbstractFile on top of JCR
+            // todo implement: pass AbstractFile to compiler for output (compiler.genJVM.outputDir = ...)
+            // todo implement: interpreter should check if script needs re-compilation
+            // todo implement: use AbstractFileClassLoader for execution
+            String scriptName = getScriptName(bindings);
+            synchronized (interpreter) {
+                check(interpreter.compile(scriptName, script, scalaBindings));
             }
-        }
-        catch (IOException e) {
-            throw initCause(new ScriptException("Error executing script"), e);
+            check(interpreter.execute(scriptName, scalaBindings, getInputStream(context), getOutputStream(context)));
         }
         catch (InterpreterException e) {
             throw initCause(new ScriptException("Error executing script"), e);
@@ -124,8 +100,110 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
             throw new IllegalArgumentException("Bindings does not contain script helper object");
         }
         else {
-            return helper.getScript().getScriptResource().getPath();
+            String path = helper.getScript().getScriptResource().getPath();
+            if ( path.endsWith(".java") ) {
+                path = path.substring(0, path.length() - 5);
+            }
+
+            int pos = path.lastIndexOf("/");
+            return pos == -1
+                ? makeJavaIdentifier(path)
+                : path.substring(0, pos + 1) + makeJavaIdentifier(path.substring(pos + 1));
         }
+    }
+
+    /**
+     * Converts the given identifier to a legal Java identifier
+     * @param identifier Identifier to convert
+     * @return Legal Java identifier corresponding to the given identifier
+     */
+    private static final String makeJavaIdentifier(String identifier) {
+        StringBuffer id = new StringBuffer(identifier.length());
+        if (!Character.isJavaIdentifierStart(identifier.charAt(0))) {
+            id.append('_');
+        }
+        for (int i = 0; i < identifier.length(); i++) {
+            char ch = identifier.charAt(i);
+            if (Character.isJavaIdentifierPart(ch) && ch != '_') {
+                id.append(ch);
+            }
+            else if (ch == '.') {
+                id.append('_');
+            }
+            else {
+                id.append(mangleChar(ch));
+            }
+        }
+        if (isJavaKeyword(id.toString())) {
+            id.append('_');
+        }
+        return id.toString();
+    }
+
+    /**
+     * Mangle the specified character to create a legal Java class name.
+     */
+    private static final String mangleChar(char ch) {
+        char[] result = new char[5];
+        result[0] = '_';
+        result[1] = Character.forDigit((ch >> 12) & 0xf, 16);
+        result[2] = Character.forDigit((ch >> 8) & 0xf, 16);
+        result[3] = Character.forDigit((ch >> 4) & 0xf, 16);
+        result[4] = Character.forDigit(ch & 0xf, 16);
+        return new String(result);
+    }
+
+    private static final Set<String> KEYWORDS = new HashSet<String>() {{
+        add("abstract"); add("assert"); add("boolean"); add("break"); add("byte"); add("case"); add("catch");
+        add("char"); add("class"); add("const"); add("continue"); add("default"); add("do"); add("double");
+        add("else"); add("enum"); add("extends"); add("final"); add("finally"); add("float"); add("for");
+        add("goto"); add("if"); add("implements"); add("import"); add("instanceof"); add("int");
+        add("interface"); add("long"); add("native"); add("new"); add("package"); add("private");
+        add("protected"); add("public"); add("return"); add("short"); add("static"); add("strictfp");
+        add("super"); add("switch"); add("synchronized"); add("this"); add("throws"); add("transient");
+        add("try"); add("void"); add("volatile"); add("while");
+    }};
+
+
+    /**
+     * Test whether the argument is a Java keyword
+     */
+    private static boolean isJavaKeyword(String key) {
+        return KEYWORDS.contains(key);
+    }
+
+    private static void check(Reporter result) throws ScriptException {
+        if (result.hasErrors()) {
+            throw new ScriptException(result.toString());
+        }
+    }
+
+    private static InputStream getInputStream(final ScriptContext context) {
+        return new InputStream() {
+            @Override
+            public int read() throws IOException {
+                return new BufferedReader(context.getReader()).read();
+            }
+        };
+    }
+
+    private static OutputStream getOutputStream(final ScriptContext context) {
+        return new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                new BufferedWriter(context.getWriter()).write(b);
+            }
+        };
+    }
+
+    // todo fix: use when ScalaInterpreter supports it
+    private static OutputStream getErrorStream(final ScriptContext context) {
+        return new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                new BufferedWriter(context.getErrorWriter()).write(b);
+            }
+        };
     }
 
     @SuppressWarnings("serial")
