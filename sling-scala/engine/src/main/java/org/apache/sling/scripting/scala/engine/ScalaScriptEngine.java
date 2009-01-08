@@ -173,20 +173,20 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
 
         String[] parts = path.split("/");
         StringBuilder scriptName = new StringBuilder();
-        scriptName.append(makeJavaIdentifier(parts[0]));
+        scriptName.append(makeIdentifier(parts[0]));
         for (int k = 1; k < parts.length; k++) {
-            scriptName.append('.').append(makeJavaIdentifier(parts[k]));
+            scriptName.append('.').append(makeIdentifier(parts[k]));
         }
 
         return scriptName.toString();
     }
 
     /**
-     * Converts the given identifier to a legal Java identifier
+     * Converts the given identifier to a legal Java/Scala identifier
      * @param identifier Identifier to convert
-     * @return Legal Java identifier corresponding to the given identifier
+     * @return Legal Java/Scala identifier corresponding to the given identifier
      */
-    private static final String makeJavaIdentifier(String identifier) {
+    private static final String makeIdentifier(String identifier) {
         StringBuffer id = new StringBuffer(identifier.length());
         if (!Character.isJavaIdentifierStart(identifier.charAt(0))) {
             id.append('_');
@@ -203,14 +203,14 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
                 id.append(mangleChar(ch));
             }
         }
-        if (isJavaKeyword(id.toString())) {
+        if (isKeyword(id.toString())) {
             id.append('_');
         }
         return id.toString();
     }
 
     /**
-     * Mangle the specified character to create a legal Java class name.
+     * Mangle the specified character to create a legal Java/Scala class name.
      */
     private static final String mangleChar(char ch) {
         char[] result = new char[5];
@@ -231,14 +231,17 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         add("interface"); add("long"); add("native"); add("new"); add("package"); add("private");
         add("protected"); add("public"); add("return"); add("short"); add("static"); add("strictfp");
         add("super"); add("switch"); add("synchronized"); add("this"); add("throws"); add("transient");
-        add("try"); add("void"); add("volatile"); add("while");
+        add("try"); add("void"); add("volatile"); add("while"); add("true"); add("false"); add("null");
+        add("forSome"); add("type"); add("var"); add("val"); add("def"); add("with"); add("yield");
+        add("match"); add("implicit"); add("lazy"); add("override"); add("sealed"); add("trait");
+        add("object");
     }};
 
     /**
      * Test whether the argument is a Java keyword
      */
-    private static boolean isJavaKeyword(String key) {
-        return KEYWORDS.contains(key);
+    private static boolean isKeyword(String token) {
+        return KEYWORDS.contains(token);
     }
 
     private static InputStream getInputStream(final ScriptContext context) {
@@ -263,7 +266,8 @@ public class ScalaScriptEngine extends AbstractSlingScriptEngine {
         };
     }
 
-    @SuppressWarnings("unused")  // todo fix: redirect stdErr when Scala supports it
+    // todo fix: redirect stdErr when Scala supports it
+    @SuppressWarnings("unused")
     private static OutputStream getErrorStream(final ScriptContext context) {
         return new OutputStream() {
             private final Writer writer = context.getErrorWriter();

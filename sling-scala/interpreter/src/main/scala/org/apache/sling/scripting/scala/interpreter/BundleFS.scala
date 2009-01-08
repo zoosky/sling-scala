@@ -2,12 +2,13 @@ import scala.tools.nsc.io.AbstractFile
 import java.io.{File, InputStream, OutputStream, IOException}
 import java.net.URL
 import org.osgi.framework.Bundle
+import org.apache.sling.scripting.scala.Utils.{valueOrElse, nullOrElse}
 
 package org.apache.sling.scripting.scala.interpreter {
 
 object BundleFS {
   def create(bundle: Bundle): AbstractFile = {
-    assert(bundle ne null)
+    assert(bundle != null)
 
     abstract class BundleEntry(url: URL, parent: DirEntry) extends AbstractFile {
       lazy val (path: String, name: String) = getPathAndName(url)
@@ -18,13 +19,14 @@ object BundleFS {
         catch { case _ => 0 }
 
       def container: AbstractFile =
-        if (parent ne null) parent
-        else throw new IOException("No container")
+        valueOrElse(parent) {
+          throw new IOException("No container")
+        }
 
       def input: InputStream = url.openStream()
       def output = throw new IOException("not supported: output")
 
-      private def getPathAndName(url: URL) = {
+      private def getPathAndName(url: URL): (String, String) = {
         val u = url.getPath
         var k = u.length
         while( (k > 0) && (u(k - 1) == '/') )
@@ -58,8 +60,7 @@ object BundleFS {
 
       def lookupName(name: String, directory: Boolean): AbstractFile = {
         val entry = bundle.getEntry(fullName + "/" + name)
-        if (entry eq null) null
-        else {
+        nullOrElse(entry) { entry =>
           if (directory)
             new DirEntry(entry, DirEntry.this)
           else

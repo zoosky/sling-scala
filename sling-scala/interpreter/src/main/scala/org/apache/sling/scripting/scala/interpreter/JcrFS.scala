@@ -22,7 +22,7 @@ object JcrFS {
   abstract sealed class JcrNode(node: Node) extends AbstractFile {
     assert (node != null)
 
-    val emptyInputStream = new InputStream {
+    val emptyInputStream: InputStream = new InputStream {
       override def read = -1
     }
 
@@ -51,7 +51,7 @@ object JcrFS {
   }
 
   case class JcrFolder(node: Node) extends JcrNode(node) {
-    def isDirectory = true
+    def isDirectory: Boolean = true
     def input: InputStream = throw new IOException("Cannot read from directory")
     def output: OutputStream = throw new IOException("Cannot write to directory")
 

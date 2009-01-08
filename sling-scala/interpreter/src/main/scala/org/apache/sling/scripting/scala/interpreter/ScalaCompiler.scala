@@ -1,6 +1,6 @@
 import scala.tools.nsc.{Settings, Global}
-import scala.tools.nsc.reporters.Reporter
 import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.reporters.Reporter
 
 package org.apache.sling.scripting.scala.interpreter {
 

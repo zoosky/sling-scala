@@ -33,9 +33,9 @@ trait Bindings extends Map[String, Argument[_]] {
 class ScalaBindings extends Bindings {
   private val bindings = new HashMap[String, Argument[_]]
 
-  def size = bindings.size
-  def get(key: String) = bindings.get(key)
-  def elements = bindings.elements
+  def size: Int = bindings.size
+  def get(key: String): Option[Argument[_]] = bindings.get(key)
+  def elements: Iterator[(String, Argument[_])] = bindings.elements
 
   def put(key: String, value: Argument[_]): Argument[_] =
     bindings.put(key, value) match {

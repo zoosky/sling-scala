@@ -1,10 +1,11 @@
 import scala.tools.nsc.{Settings, Global}
-import scala.tools.nsc.reporters.Reporter
 import scala.tools.nsc.interpreter.AbstractFileClassLoader
 import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.reporters.Reporter
 import scala.tools.nsc.util.{SourceFile, BatchSourceFile}
 import java.net.URLClassLoader
 import java.io.{File, InputStream, OutputStream}
+import org.apache.sling.scripting.scala.Utils.{option}
 
 package org.apache.sling.scripting.scala.interpreter {
 
@@ -20,7 +21,7 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
   def this(settings: Settings, reporter: Reporter) =
     this(settings, reporter, null, null)
 
-  private final val NL = System.getProperty("line.separator");
+  private final val NL: String = System.getProperty("line.separator");
 
   protected val parentClassLoader: ClassLoader = getClass.getClassLoader
 
@@ -92,8 +93,8 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
   }
 
   @throws(classOf[InterpreterException])
-  def interprete(name: String, code: String, bindings: Bindings,
-                 in: Option[InputStream], out: Option[OutputStream]): Reporter = {
+  def interprete(name: String, code: String, bindings: Bindings, in: Option[InputStream],
+                 out: Option[OutputStream]): Reporter = {
     compile(name, code, bindings)
     if (reporter.hasErrors)
       reporter
@@ -107,12 +108,13 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
     interprete(name, code, bindings, None, None)
 
   @throws(classOf[InterpreterException])
-  def interprete(name: String, code: String, bindings: Bindings, in: InputStream, out: OutputStream): Reporter =
+  def interprete(name: String, code: String, bindings: Bindings, in: InputStream,
+                 out: OutputStream): Reporter =
     interprete(name, code, bindings, option(in), option(out))
 
   @throws(classOf[InterpreterException])
-  def interprete(name: String, source: AbstractFile, bindings: Bindings,
-                 in: Option[InputStream], out: Option[OutputStream]): Reporter = {
+  def interprete(name: String, source: AbstractFile, bindings: Bindings, in: Option[InputStream],
+                 out: Option[OutputStream]): Reporter = {
     compile(name, source, bindings)
     if (reporter.hasErrors)
       reporter
@@ -126,8 +128,8 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
     interprete(name, source, bindings, None, None)
 
   @throws(classOf[InterpreterException])
-  def interprete(name: String, source: AbstractFile, bindings: Bindings,
-                 in: InputStream, out: OutputStream): Reporter =
+  def interprete(name: String, source: AbstractFile, bindings: Bindings, in: InputStream,
+                 out: OutputStream): Reporter =
     interprete(name, source, bindings, option(in), option(out))
 
   def getClassFile(name: String): AbstractFile = {
@@ -172,9 +174,6 @@ class ScalaInterpreter(settings: Settings, reporter: Reporter, classes: Array[Ab
   @throws(classOf[InterpreterException])
   def execute(name: String, bindings: Bindings, in: InputStream, out: OutputStream): Reporter =
     execute(name, bindings, option(in), option(out))
-
-  private def option[T](opt: T): Option[T] =
-    if (null == opt) None else Some(opt)
 
 }
 

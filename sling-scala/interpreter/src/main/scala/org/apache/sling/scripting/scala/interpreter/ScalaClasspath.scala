@@ -1,5 +1,5 @@
-import scala.tools.nsc.util.ClassPath
 import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.util.ClassPath
 
 package org.apache.sling.scripting.scala.interpreter {
 
@@ -9,8 +9,8 @@ class ScalaClasspath(onlyPresentation: Boolean) extends ClassPath(onlyPresentati
       codebase: String, classes: Array[AbstractFile])
       extends Build(classpath, source, output, boot, extdirs, codebase) {
 
-    if (classes ne null) {
-      for (file <- classes if file ne null) {
+    if (classes != null) {
+      for (file <- classes if file != null) {
         val lib = new Library(file)
         entries += lib
       }

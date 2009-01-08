@@ -10,4 +10,7 @@ object Utils {
     if (t == null) default
     else t
 
+  def option[T](opt: T): Option[T] =
+    if (null == opt) None else Some(opt)
+
 }
