@@ -36,7 +36,6 @@
 
     <properties>
         <scala.version>2.7.2</scala.version>
-        <sling.version>2.0.3-incubator-SNAPSHOT</sling.version>
     </properties>
     
     <repositories>
@@ -82,8 +81,6 @@
                         <Import-Package>
                             !jline.*,
                             !org.apache.tools.ant.*,
-                            !org.apache.sling.jcr.api.*,
-                            !org.apache.sling.scripting.api.*,
                             *
                         </Import-Package>
                         <Private-Package>
@@ -105,27 +102,27 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.scripting.scala.interpreter</artifactId>
-            <version>${sling.version}</version>
+            <version>2.0.3-incubator-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.api</artifactId>
-            <version>${sling.version}</version>
+            <version>2.0.2-incubator</version>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.testing</artifactId>
-            <version>${sling.version}</version>
+            <version>2.0.2-incubator</version>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.scripting.api</artifactId>
-            <version>${sling.version}</version>
+            <version>2.0.2-incubator</version>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.jcr.api</artifactId>
-            <version>${sling.version}</version>
+            <version>2.0.2-incubator</version>
         </dependency>
         <dependency>
             <groupId>org.apache.bsf</groupId>
@@ -176,6 +173,12 @@
             <artifactId>slf4j-simple</artifactId>
             <scope>test</scope>
         </dependency>      
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-core</artifactId>
+            <version>1.5.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
   
 </project>
