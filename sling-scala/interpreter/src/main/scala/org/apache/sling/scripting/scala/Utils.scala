@@ -16,17 +16,37 @@
  */
 package org.apache.sling.scripting.scala
 
+/**
+ * General purpose utility functions
+ */
 object Utils {
 
+  /**
+   * Evaluate <code>f</code> on <code>s</code> if <code>s</code> is not null.
+   * @param s
+   * @param f
+   * @return <code>f(s)</code> if s is not <code>null</code>, <code>null</code> otherwise.
+   */
   def nullOrElse[S, T](s: S)(f: S => T): T =
     if (s == null) null.asInstanceOf[T]
     else f(s)
 
+  /**
+   * @param t
+   * @param default
+   * @return <code>t</code> or <code>default</code> if <code>null</code>.
+   */
   def valueOrElse[T](t: T)(default: => T) =
     if (t == null) default
     else t
 
-  def option[T](opt: T): Option[T] =
-    if (null == opt) None else Some(opt)
+  /**
+   * Converts a value into an Option.
+   * @param value
+   * @returns <code>Some(value)</code> if value is not <code>null</code>,
+   * <code>None</code> otherwise.
+   */
+  def option[T](value: T): Option[T] =
+    if (null == value) None else Some(value)
 
 }
