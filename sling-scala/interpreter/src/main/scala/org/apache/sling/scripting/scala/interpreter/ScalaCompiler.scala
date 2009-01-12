@@ -25,13 +25,12 @@ class ScalaCompiler(settings: Settings, reporter: Reporter, classes: Array[Abstr
 
   override lazy val classPath0 = new ScalaClasspath(false && onlyPresentation)
 
-  override lazy val classPath =
-    if (forMSIL)
-      abort("MSIL not supported")
-    else
-      new classPath0.BuildClasspath(settings.classpath.value, settings.sourcepath.value,
-       settings.outdir.value, settings.bootclasspath.value, settings.extdirs.value,
-       settings.Xcodebase.value, classes)
+  override lazy val classPath = {
+    require(!forMSIL, "MSIL not supported")
+    new classPath0.BuildClasspath(settings.classpath.value, settings.sourcepath.value,
+      settings.outdir.value, settings.bootclasspath.value, settings.extdirs.value,
+      settings.Xcodebase.value, classes)
+    }
 
 }
 

@@ -24,7 +24,7 @@ package org.apache.sling.scripting.scala.interpreter {
 
 object BundleFS {
   def create(bundle: Bundle): AbstractFile = {
-    assert(bundle != null)
+    require(bundle != null, "bundle must not be null")
 
     abstract class BundleEntry(url: URL, parent: DirEntry) extends AbstractFile {
       lazy val (path: String, name: String) = getPathAndName(url)

@@ -36,7 +36,7 @@ object JcrFS {
   }
 
   abstract sealed class JcrNode(node: Node) extends AbstractFile {
-    assert (node != null)
+    require(node != null, "node must not be null")
 
     val emptyInputStream: InputStream = new InputStream {
       override def read = -1
