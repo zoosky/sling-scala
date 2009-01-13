@@ -19,6 +19,10 @@ import scala.tools.nsc.util.ClassPath
 
 package org.apache.sling.scripting.scala.interpreter {
 
+/**
+ * Specialized class path for the {@link ScalaCompiler} which supports {@link AbstractFile}
+ * entries.
+ */
 class ScalaClasspath(onlyPresentation: Boolean) extends ClassPath(onlyPresentation) {
 
   class BuildClasspath(classpath: String, source: String, output: String, boot: String, extdirs: String,

@@ -16,6 +16,9 @@
  */
 package org.apache.sling.scripting.scala.interpreter
 
+/**
+ * Exception thrown by {@link ScalaInterpreter} in case of errors.
+ */
 class InterpreterException(message: String, cause: Throwable) extends Exception(message, cause) {
   def this(cause: Throwable) = this(if (cause == null) null else cause.getMessage, cause)
   def this(message: String) = this(message, null);

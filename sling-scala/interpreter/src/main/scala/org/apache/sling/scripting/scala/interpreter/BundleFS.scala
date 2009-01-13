@@ -22,14 +22,31 @@ import org.apache.sling.scripting.scala.Utils.{valueOrElse, nullOrElse}
 
 package org.apache.sling.scripting.scala.interpreter {
 
+/**
+ * Implementation of {@link AbstractFile} on top of a {@link org.osgi.framework.Bundle}
+ */
 object BundleFS {
+
+  /**
+   * Create a new {@link AbstractFile} instance representing an
+   * {@link org.osgi.framework.Bundle}
+   * @param bundle
+   */
   def create(bundle: Bundle): AbstractFile = {
     require(bundle != null, "bundle must not be null")
 
     abstract class BundleEntry(url: URL, parent: DirEntry) extends AbstractFile {
       lazy val (path: String, name: String) = getPathAndName(url)
       lazy val fullName: String = (path::name::Nil).filter(!_.isEmpty).mkString("/")
+
+      /**
+       * @return null
+       */
       def file: File = null
+
+      /**
+       * @return last modification time or 0 if not known
+       */
       def lastModified: Long =
         try { url.openConnection.getLastModified }
         catch { case _ => 0 }
@@ -40,6 +57,11 @@ object BundleFS {
         }
 
       def input: InputStream = url.openStream()
+
+      /**
+       * Not supported. Always throws an IOException.
+       * @throws IOException
+       */
       def output = throw new IOException("not supported: output")
 
       private def getPathAndName(url: URL): (String, String) = {
@@ -57,6 +79,10 @@ object BundleFS {
     }
 
     class DirEntry(url: URL, parent: DirEntry) extends BundleEntry(url, parent) {
+
+      /**
+       * @return true
+       */
       def isDirectory: Boolean = true
 
       def elements: Iterator[AbstractFile] = {
@@ -69,7 +95,7 @@ object BundleFS {
             if (entry.endsWith("/"))
               new DirEntry(entryUrl, DirEntry.this)
             else
-                new FileEntry(entryUrl, DirEntry.this)
+              new FileEntry(entryUrl, DirEntry.this)
           }
         }
       }
@@ -87,6 +113,10 @@ object BundleFS {
     }
 
     class FileEntry(url: URL, parent: DirEntry) extends BundleEntry(url, parent) {
+
+      /**
+       * @return false
+       */
       def isDirectory: Boolean = false
       override def size: Option[Int] = Some(bundle.getEntry(fullName).openConnection().getContentLength())
       def elements: Iterator[AbstractFile] = Iterator.empty

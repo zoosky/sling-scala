@@ -20,6 +20,10 @@ import scala.tools.nsc.reporters.Reporter
 
 package org.apache.sling.scripting.scala.interpreter {
 
+/**
+ * Extendend Scala compiler which supports a class path with {@link AbstractFile} entries.
+ * Note: this implementation does not support MSIL (.NET).
+ */
 class ScalaCompiler(settings: Settings, reporter: Reporter, classes: Array[AbstractFile])
   extends Global(settings, reporter) {
 
