@@ -51,17 +51,20 @@ object BundleFS {
         try { url.openConnection.getLastModified }
         catch { case _ => 0 }
 
+      @throws(classOf[IOException])
       def container: AbstractFile =
         valueOrElse(parent) {
           throw new IOException("No container")
         }
 
+      @throws(classOf[IOException])
       def input: InputStream = url.openStream()
 
       /**
        * Not supported. Always throws an IOException.
        * @throws IOException
        */
+      @throws(classOf[IOException])
       def output = throw new IOException("not supported: output")
 
       private def getPathAndName(url: URL): (String, String) = {

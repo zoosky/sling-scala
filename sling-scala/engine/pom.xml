@@ -81,6 +81,8 @@
                         <Import-Package>
                             !jline.*,
                             !org.apache.tools.ant.*,
+                            !org.apache.jackrabbit.core.*,
+                            !junit.*,
                             *
                         </Import-Package>
                         <Private-Package>
