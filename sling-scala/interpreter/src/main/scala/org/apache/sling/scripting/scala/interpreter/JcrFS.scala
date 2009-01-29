@@ -235,10 +235,10 @@ object JcrFS {
     }
 
     /**
-     * @returns the size of the {@ling #dataProperty} or null if the property does not
+     * @returns the size of the {@ling #dataProperty} or None if the property does not
      * exist.
      */
-    override def size: Option[Int] = {
+    override def sizeOption: Option[Int] = {
       val p = dataProperty
       if (p == null) None
       else Some(p.getLength.toInt)

@@ -121,7 +121,7 @@ object BundleFS {
        * @return false
        */
       def isDirectory: Boolean = false
-      override def size: Option[Int] = Some(bundle.getEntry(fullName).openConnection().getContentLength())
+      override def sizeOption: Option[Int] = Some(bundle.getEntry(fullName).openConnection().getContentLength())
       def elements: Iterator[AbstractFile] = Iterator.empty
       def lookupName(name: String, directory: Boolean): AbstractFile = null
     }

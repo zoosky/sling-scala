@@ -93,7 +93,7 @@ class JcrFSTest extends TestCase {
     assertEquals("file", file.name)
     assertEquals("/testRoot/file", file.path)
     assertEquals(fileNode.getProperty("jcr:content/jcr:lastModified").getLong, file.lastModified)
-    assertEquals(fileNode.getProperty("jcr:content/jcr:data").getLength, file.size.get.toLong)
+    assertEquals(fileNode.getProperty("jcr:content/jcr:data").getLength, file.sizeOption.get.toLong)
 
     val contentNode = fileNode.getNode("jcr:content")
     assertEquals("nt:resource", contentNode.getPrimaryNodeType.getName)
@@ -130,7 +130,7 @@ class JcrFSTest extends TestCase {
     writer.print("Hello world")
     writer.close
     assertEquals("Hello world", contentNode.getProperty("jcr:data").getString)
-    assertEquals(11, file.size.get)
+    assertEquals(11, file.sizeOption.get)
 
     val reader = new InputStreamReader(file.input)
     val c = new Array[char](32)
