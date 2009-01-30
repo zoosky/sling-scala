@@ -23,6 +23,8 @@ import java.io.Reader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -58,7 +60,7 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
     public final static String[] SCALA_SCRIPT_EXTENSIONS = {"scala", "scs"};
     public final static String SCALA_MIME_TYPE = "application/x-scala";
     public final static String SHORT_NAME = "scala";
-    public final static String VERSION = "2.7.2";
+    public final static String VERSION = "2.7.3";
 
     /**
      * @scr.property
@@ -139,7 +141,7 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
 
     private static Settings createSettings(Bundle[] bundles) {
         Settings settings = new Settings();
-        URL[] bootUrls = getUrlClassLoader(bundles[0]).getURLs();
+        URL[] bootUrls = getBootUrls(bundles[0]);
         StringBuilder bootPath = new StringBuilder(settings.classpath().v());
         for (int k = 0; k < bootUrls.length; k++) {
             bootPath.append(PATH_SEPARATOR).append(bootUrls[k].getPath());
@@ -151,16 +153,19 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
 
     private static AbstractFile[] createClassPath(Bundle[] bundles) {
         AbstractFile[] bundleFs = new AbstractFile[bundles.length];
-        for (int k = 1; k < bundles.length; k++) { // system bundle is special, skip it
-            bundleFs[k] = BundleFS.create(bundles[k]);
-        }
-
-        try { // handle system bundle
-            URL url = bundles[0].getResource("/");
-            bundleFs[0] = new PlainFile(new File(url.toURI()));
-        }
-        catch (URISyntaxException e) {
-            throw initCause(new IllegalArgumentException("Can't determine url of system bundle"), e);
+        for (int k = 0; k < bundles.length; k++) {
+            URL url = bundles[k].getResource("/");
+            if ("file".equals(url.getProtocol())) {
+                try {
+                    bundleFs[k] = new PlainFile(new File(url.toURI()));
+                }
+                catch (URISyntaxException e) {
+                    throw initCause(new IllegalArgumentException("Can't determine url of bundle " + k), e);
+                }
+            }
+            else {
+                bundleFs[k] = BundleFS.create(bundles[k]);
+            }
         }
         return bundleFs;
     }
@@ -171,12 +176,17 @@ public class ScalaScriptEngineFactory extends AbstractScriptEngineFactory {
         return JcrFS.create(node);
     }
 
-    private static URLClassLoader getUrlClassLoader(Bundle bundle) {
-        ClassLoader classLoader = bundle.getClass().getClassLoader().getParent();
-        if (!(classLoader instanceof URLClassLoader)) {
-            throw new IllegalArgumentException("Classloader of bundle is not a URLClassLoader");
+    private static URL[] getBootUrls(Bundle bundle) {
+        ArrayList<URL> urls = new ArrayList<URL>();
+        ClassLoader classLoader = bundle.getClass().getClassLoader();
+        while (classLoader != null) {
+            if (classLoader instanceof URLClassLoader) {
+                urls.addAll(Arrays.asList(((URLClassLoader) classLoader).getURLs()));
+            }
+            classLoader = classLoader.getParent();
         }
-        return (URLClassLoader) classLoader;
+
+        return urls.toArray(new URL[urls.size()]);
     }
 
 }
