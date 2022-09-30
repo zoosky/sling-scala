@@ -44,7 +44,7 @@
 	</description>
 
 	<properties>
-		<scala.version>2.13.5</scala.version>
+		<scala.version>2.13.9</scala.version>
 		<test.jvm.args></test.jvm.args>
 	</properties>
 
